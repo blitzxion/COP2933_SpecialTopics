@@ -1,0 +1,22 @@
+﻿<nav class="navbar-default navbar-static-side" role="navigation">
+	<div class="sidebar-collapse">
+		<ul class="nav" id="side-menu">
+			<li class="nav-header">
+				<div class="logo-element">
+					LP+
+				</div>
+			</li>
+			<li class="@Html.IsSelected(controller:"Home")">
+				<a href="@Url.Action("Index", "Home")"><i class="fa fa-laptop"></i> <span class="nav-label">Home</span> </a>
+			</li>
+			<li class="@Html.IsSelected(controller:"Records")">
+				<a href="@Url.Action("Index", "Records")"><i class="fa fa-th-large"></i> <span class="nav-label" data-i18n="nav.Records">Records</span> <span class="fa arrow"></span></a>
+				<ul class="nav nav-second-level collapse @Html.IsSelected(controller: "Records", cssClass: "in")">
+					<li class="@Html.IsSelected("Records", "Index")"><a href="@Url.Action("Index", "Records")">All Records</a></li>
+					<li class="@Html.IsSelected("Records", "SampleGraph")"><a href="@Url.Action("SampleGraph", "Records")">Sample Graph</a></li>
+                    <li class="@Html.IsSelected("Records", "Manage")"><a href="@Url.Action("Manage", "Records")">Management</a></li>
+				</ul>
+			</li>
+		</ul>
+	</div>
+</nav>

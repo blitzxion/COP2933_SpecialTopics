@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogFileParser", "LogFileParser\LogFileParser.csproj", "{B06B0298-7320-4E0B-AAA8-1C5E34205349}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogFileParser.Tests", "LogFileParser.Tests\LogFileParser.Tests.csproj", "{1EDC2B68-3E9A-4A08-BF04-FE8A8A778513}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogParserModels", "LogParserModels\LogParserModels.csproj", "{F56E20ED-00FE-4EC6-B1BB-B0BF77DA1B87}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B06B0298-7320-4E0B-AAA8-1C5E34205349}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B06B0298-7320-4E0B-AAA8-1C5E34205349}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B06B0298-7320-4E0B-AAA8-1C5E34205349}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B06B0298-7320-4E0B-AAA8-1C5E34205349}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EDC2B68-3E9A-4A08-BF04-FE8A8A778513}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EDC2B68-3E9A-4A08-BF04-FE8A8A778513}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EDC2B68-3E9A-4A08-BF04-FE8A8A778513}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EDC2B68-3E9A-4A08-BF04-FE8A8A778513}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F56E20ED-00FE-4EC6-B1BB-B0BF77DA1B87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F56E20ED-00FE-4EC6-B1BB-B0BF77DA1B87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F56E20ED-00FE-4EC6-B1BB-B0BF77DA1B87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F56E20ED-00FE-4EC6-B1BB-B0BF77DA1B87}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
