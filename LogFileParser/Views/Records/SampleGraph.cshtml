@@ -77,6 +77,9 @@
 	<script>
 		(function () {
 
+		    var messageChart, messageChartPerc;
+		    var syncCharts = [];
+
 			LoadMetrics("@Url.Action("GetMessageMetrics", "Records")", function (data) {
 
 				var chartDiv = $('<div/>')
@@ -95,9 +98,12 @@
 				var chartData = {
 					data: [],
 					toolTip: { shared: true },
-					// animationEnabled: true,
-					zoomEnabled: true,
-					axisY: { title: "appearance", gridThickness: 0,  },
+				    // animationEnabled: true,
+                    rangeChanged : SyncHanlder,
+                    zoomEnabled: true,
+                    zoomType: "x",
+                    axisY: { title: "appearance", gridThickness: 0, },
+                    axisX:  { }
 					//axisX: {
 					//	interval: 30,
 					//	intervalType: "minute",
@@ -132,6 +138,8 @@
 
 				chartDiv.CanvasJSChart(chartData);
 				chartPercDiv.CanvasJSChart(chartPercData);
+
+				syncCharts = [chartDiv.CanvasJSChart(), chartPercDiv.CanvasJSChart()];
 
 			});
 
@@ -241,6 +249,40 @@
 							onSuccess(jData);
 					}
 				});
+			}
+
+			
+			function SyncHanlder(e) {
+
+			    for (var i = 0; i < syncCharts.length; i++) {
+
+			        var chart = syncCharts[i];
+
+			        // if (!chart.options.axisX) chart.options.axisX = {};
+
+			        // if (!chart.options.axisY) chart.options.axisY = {};
+
+			        if (e.trigger === "reset") {
+
+			            chart.options.axisX.viewportMinimum = chart.options.axisX.viewportMaximum = null;
+			            chart.options.axisY.viewportMinimum = chart.options.axisY.viewportMaximum = null;
+
+			            chart.render();
+
+			        } else if (chart !== e.chart) {
+			            console.log(e);
+			            chart.options.axisX.viewportMinimum = e.axisX.viewportMinimum;
+			            chart.options.axisX.viewportMaximum = e.axisX.viewportMaximum;
+
+			            //chart.options.axisY.viewportMinimum = e.axisY.viewportMinimum;
+			            //chart.options.axisY.viewportMaximum = e.axisY.viewportMaximum;
+
+			            chart.render();
+
+			        }
+
+			    }
+
 			}
 
 		}());
