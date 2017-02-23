@@ -77,8 +77,8 @@
 	<script>
 		(function () {
 
-		    var messageChart, messageChartPerc;
-		    var syncCharts = [];
+			var messageChart, messageChartPerc;
+			var charts = [];
 
 			LoadMetrics("@Url.Action("GetMessageMetrics", "Records")", function (data) {
 
@@ -98,20 +98,12 @@
 				var chartData = {
 					data: [],
 					toolTip: { shared: true },
-				    // animationEnabled: true,
-                    rangeChanged : SyncHanlder,
-                    zoomEnabled: true,
-                    zoomType: "x",
-                    axisY: { title: "appearance", gridThickness: 0, },
-                    axisX:  { }
-					//axisX: {
-					//	interval: 30,
-					//	intervalType: "minute",
-					//	valueFormatString: "hh:mm TT",
-					//}
+					rangeChanged: SyncHandler,
+					zoomEnabled: true,
+					zoomType: "x",
 				};
 				var chartPercData = $.extend(true, {}, chartData);
-				
+
 				$.each(data.data, function (index, value) {
 
 					var dataSet = { type: "stackedColumn", dataPoints: [] },
@@ -139,7 +131,8 @@
 				chartDiv.CanvasJSChart(chartData);
 				chartPercDiv.CanvasJSChart(chartPercData);
 
-				syncCharts = [chartDiv.CanvasJSChart(), chartPercDiv.CanvasJSChart()];
+				charts.push($('#messageData').CanvasJSChart());
+				charts.push($('#messageDataPerc').CanvasJSChart());
 
 			});
 
@@ -207,7 +200,7 @@
 			});
 
 			LoadMetrics("@Url.Action("GetTopSendingCountries", "Records")", function (data) {
-				
+
 				var chartDiv = $('<div/>')
 					.attr("id", "topCountries")
 					.css({
@@ -251,39 +244,40 @@
 				});
 			}
 
-			
-			function SyncHanlder(e) {
 
-			    for (var i = 0; i < syncCharts.length; i++) {
+			function SyncHandler(e) {
 
-			        var chart = syncCharts[i];
+				for (var i = 0; i < charts.length; i++) {
+					var chart = charts[i];
 
-			        // if (!chart.options.axisX) chart.options.axisX = {};
+					//if (!chart.options.axisX) chart.options.axisX = {};
+					//if (!chart.options.axisY) chart.options.axisY = {};
 
-			        // if (!chart.options.axisY) chart.options.axisY = {};
+					if (e.trigger === "reset") {
 
-			        if (e.trigger === "reset") {
+						chart.options.axisX.viewportMinimum = chart.options.axisX.viewportMaximum = null;
+						chart.options.axisY.viewportMinimum = chart.options.axisY.viewportMaximum = null;
 
-			            chart.options.axisX.viewportMinimum = chart.options.axisX.viewportMaximum = null;
-			            chart.options.axisY.viewportMinimum = chart.options.axisY.viewportMaximum = null;
+						chart.render();
 
-			            chart.render();
+					} else if (chart !== e.chart) {
 
-			        } else if (chart !== e.chart) {
-			            console.log(e);
-			            chart.options.axisX.viewportMinimum = e.axisX.viewportMinimum;
-			            chart.options.axisX.viewportMaximum = e.axisX.viewportMaximum;
+						console.log(e, chart);
 
-			            //chart.options.axisY.viewportMinimum = e.axisY.viewportMinimum;
-			            //chart.options.axisY.viewportMaximum = e.axisY.viewportMaximum;
+						//chart.options.axisX.viewportMinimum = e.axisX.viewportMinimum;
+						//chart.options.axisX.viewportMaximum = e.axisX.viewportMaximum;
+						//chart.options.axisY.viewportMinimum = e.axisY.viewportMinimum;
+						//chart.options.axisY.viewportMaximum = e.axisY.viewportMaximum;
 
-			            chart.render();
+						chart.render();
 
-			        }
+					}
 
-			    }
+				}
 
 			}
+
+			charts[1]
 
 		}());
 	</script>
