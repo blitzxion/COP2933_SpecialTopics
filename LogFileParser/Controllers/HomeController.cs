@@ -3,12 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System.Data.Entity;
+
+using LogParserModels.Models;
+using LogParserModels.Helpers;
+
+using LogFileParser.Models.ViewModels;
+using X.PagedList;
+using Newtonsoft.Json;
 
 namespace LogFileParser.Controllers
 {
-	public class HomeController : Controller
+	public class HomeController : BaseController<LogDbContext>
 	{
 		public ActionResult Index()
+		{
+			return View();
+		}
+
+		public ActionResult Test()
 		{
 			return View();
 		}

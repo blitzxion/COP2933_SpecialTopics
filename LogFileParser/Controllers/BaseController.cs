@@ -8,8 +8,6 @@ using System.Web;
 using System.Web.Mvc;
 using System.Linq.Expressions;
 
-using LogParserModels.Models;
-
 namespace LogFileParser.Controllers
 {
 	[CopyMessageTempDataFilter]

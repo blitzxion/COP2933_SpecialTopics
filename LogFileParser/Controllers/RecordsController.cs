@@ -98,9 +98,9 @@ namespace LogFileParser.Controllers
 			using (var context = AppDbContext)
 			{
 				var messages = new List<MessageData>();
-				var lastTimestamp = context.LogRecords.OrderByDescending(x => x.TimestampUTC).FirstOrDefault().TimestampUTC;
-				var startingTimestamp = new DateTime(lastTimestamp.Year, lastTimestamp.Month, lastTimestamp.Day, 0, 0, 0);
-				var endingTimestamp = startingTimestamp.AddHours(23).AddMinutes(59);
+				var lastTimestamp = context.LogRecords.OrderByDescending(x => x.TimestampUTC).FirstOrDefault().TimestampUTC; // get the last timestamp
+				var startingTimestamp = new DateTime(lastTimestamp.Year, lastTimestamp.Month, lastTimestamp.Day, 0, 0, 0); // Beginning of the day
+				var endingTimestamp = startingTimestamp.AddHours(23).AddMinutes(59); // End of the day
 
 				messages = context.LogRecords
 					.Where(x => x.TimestampUTC >= startingTimestamp)
