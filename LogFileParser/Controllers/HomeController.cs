@@ -5,10 +5,10 @@ using System.Web;
 using System.Web.Mvc;
 using System.Data.Entity;
 
-using LogParserModels.Models;
-using LogParserModels.Helpers;
+using LogFileParser.Models;
+using LogFileParser.Models.Helpers;
 
-using LogFileParser.Models.ViewModels;
+using LogFileParser.ViewModels;
 using X.PagedList;
 using Newtonsoft.Json;
 

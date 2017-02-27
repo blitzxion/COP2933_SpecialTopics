@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using LogParserModels.Models;
+using LogFileParser.Models;
 using System.Linq;
 
 namespace LogFileParser.Tests

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LogParserModels.Helpers
+namespace LogFileParser.Models.Helpers
 {
 	public static class ConnectionStringParser
 	{

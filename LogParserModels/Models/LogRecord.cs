@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LogParserModels.Models
+namespace LogFileParser.Models
 {
 	public partial class LogRecord
 	{

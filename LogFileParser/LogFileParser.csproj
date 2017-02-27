@@ -231,7 +231,7 @@
     <Compile Include="Helpers\HtmlHelperExtensions.cs" />
     <Compile Include="Helpers\Infrastructure.cs" />
     <Compile Include="Hubs\LogFileProcessingHub.cs" />
-    <Compile Include="Models\ViewModels\RecordsViewModels.cs" />
+    <Compile Include="ViewModels\RecordsViewModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -369,9 +369,9 @@
     <Content Include="Scripts\jquery-3.1.1.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LogParserModels\LogParserModels.csproj">
+    <ProjectReference Include="..\LogParserModels\LogFileParser.Models.csproj">
       <Project>{f56e20ed-00fe-4ec6-b1bb-b0bf77da1b87}</Project>
-      <Name>LogParserModels</Name>
+      <Name>LogFileParser.Models</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

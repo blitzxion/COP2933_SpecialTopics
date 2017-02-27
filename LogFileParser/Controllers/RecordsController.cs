@@ -10,10 +10,10 @@ using Microsoft.AspNet.SignalR;
 using LogFileParser.Hubs;
 using System.Data.Entity;
 
-using LogParserModels.Models;
-using LogParserModels.Helpers;
+using LogFileParser.Models;
+using LogFileParser.Models.Helpers;
 
-using LogFileParser.Models.ViewModels;
+using LogFileParser.ViewModels;
 using X.PagedList;
 using Newtonsoft.Json;
 
@@ -97,25 +97,22 @@ namespace LogFileParser.Controllers
 
 			using (var context = AppDbContext)
 			{
-				var messages = new List<MessageData>();
 				var lastTimestamp = context.LogRecords.OrderByDescending(x => x.TimestampUTC).FirstOrDefault().TimestampUTC; // get the last timestamp
 				var startingTimestamp = new DateTime(lastTimestamp.Year, lastTimestamp.Month, lastTimestamp.Day, 0, 0, 0); // Beginning of the day
 				var endingTimestamp = startingTimestamp.AddHours(23).AddMinutes(59); // End of the day
 
-				messages = context.LogRecords
-					.Where(x => x.TimestampUTC >= startingTimestamp)
-					.GroupBy(x => new { Timestamp = x.TimestampUTC, x.MessageClass })
-					.Select(x => new { x.Key.Timestamp, x.Key.MessageClass })
-					.ToList()
-					.GroupBy(x => new { Timestamp = x.Timestamp.RoundToNearest(TimeSpan.FromMinutes(5)), x.MessageClass })
+				var messages = context.LogRecords
+					.Where(x => x.TimestampUTC >= startingTimestamp && x.TimestampUTC <= endingTimestamp)
+					.Select(x => new { x.TimestampUTC, x.MessageClass })
+					.ToList() // Returns results from DB
+					.GroupBy(x => new { Timestamp = x.TimestampUTC.RoundDown(TimeSpan.FromMinutes(5)), x.MessageClass })
 					.Select(x => new MessageData()
 					{
 						Timestamp = x.Key.Timestamp,
 						MessageClass = x.Key.MessageClass,
 						Count = x.Count()
 					})
-					.OrderBy(x => x.Timestamp)
-					.ToList();
+					.OrderBy(x => x.Timestamp);
 
 				
 				foreach (var message in messages)

@@ -4,11 +4,11 @@ using System.Linq;
 using System.Web;
 using Microsoft.AspNet.SignalR;
 
-using LogParserModels.Models;
+using LogFileParser.Models;
 using System.Data.Entity;
 using LogFileParser.Helpers;
 using EntityFramework.Extensions;
-using LogParserModels.Helpers;
+using LogFileParser.Models.Helpers;
 
 namespace LogFileParser.Hubs
 {

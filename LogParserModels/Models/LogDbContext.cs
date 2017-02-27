@@ -1,4 +1,4 @@
-namespace LogParserModels.Models
+namespace LogFileParser.Models
 {
 	using CsvHelper;
 	using CsvHelper.Configuration;
