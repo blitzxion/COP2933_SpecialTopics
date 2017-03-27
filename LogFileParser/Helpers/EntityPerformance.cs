@@ -8,7 +8,15 @@ namespace LogFileParser.Helpers
 {
 	public static class EntityPerformance
 	{
-
+		/// <summary>
+		/// Save a range of entities to the context with performance in mind.
+		/// </summary>
+		/// <typeparam name="TContext"></typeparam>
+		/// <typeparam name="TEntity"></typeparam>
+		/// <param name="context"></param>
+		/// <param name="entities"></param>
+		/// <param name="onSave"></param>
+		/// <param name="disposeContext"></param>
 		public static void SaveRange<TContext, TEntity>(
 			TContext context, 
 			IEnumerable<TEntity> entities, 
@@ -37,6 +45,15 @@ namespace LogFileParser.Helpers
 			}
 		}
 
+		/// <summary>
+		/// Remove a range of entities from the context with performance in mind.
+		/// </summary>
+		/// <typeparam name="TContext"></typeparam>
+		/// <typeparam name="TEntity"></typeparam>
+		/// <param name="context"></param>
+		/// <param name="entities"></param>
+		/// <param name="onSave"></param>
+		/// <param name="disposeContext"></param>
 		public static void DeleteRange<TContext, TEntity>(TContext context,
 			IEnumerable<TEntity> entities,
 			Action<int> onSave = null,
@@ -69,10 +86,11 @@ namespace LogFileParser.Helpers
 		/// <typeparam name="TContext">The working context type</typeparam>
 		/// <typeparam name="TEntity">The DBSet model type</typeparam>
 		/// <param name="context">The working context. Will return existing or new context.</param>
-		/// <param name="entity">The object that will has the changes</param>
+		/// <param name="entity">The object that will have the changes</param>
 		/// <param name="count">Position in your loop</param>
 		/// <param name="commitCount">How many iterations before your context is saved and made anew?</param>
 		/// <param name="recreateContext">Once the commitCount is reached, recreate the context and return it?</param>
+		/// <param name="onSave"></param>
 		/// <returns></returns>
 		public static TContext SaveToContext<TContext, TEntity>(TContext context, TEntity entity, int count, int commitCount = 1000, bool recreateContext = true, Action<int> onSave = null)
 			where TContext : DbContext
