@@ -49,6 +49,10 @@
       <HintPath>..\packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Castle.DynamicLinqQueryBuilder, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.DynamicLinqQueryBuilder.1.0.5\lib\Castle.DynamicLinqQueryBuilder.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
       <Private>True</Private>
@@ -221,6 +225,7 @@
     <Compile Include="App_Start\StartUp.cs" />
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\QueriesController.cs" />
     <Compile Include="Controllers\RecordsController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -236,6 +241,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\animate.css" />
+    <Content Include="Content\bootstrap-datetimepicker.css" />
+    <Content Include="Content\bootstrap-datetimepicker.min.css" />
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
@@ -256,8 +263,14 @@
     <Content Include="Content\patterns\otis_redding.png" />
     <Content Include="Content\patterns\shattered.png" />
     <Content Include="Content\patterns\triangular.png" />
+    <Content Include="Content\plugins\bootstrapDatepicker\bootstrap-datepicker.standalone.min.css" />
+    <Content Include="Content\plugins\bootstrapDatepicker\bootstrap-datepicker3.standalone.min.css" />
     <Content Include="Content\plugins\datatables\datatables.min.css" />
     <Content Include="Content\plugins\jasny\jasny-bootstrap.min.css" />
+    <Content Include="Content\plugins\jQueryBuilder\query-builder.dark.css" />
+    <Content Include="Content\plugins\jQueryBuilder\query-builder.dark.min.css" />
+    <Content Include="Content\plugins\jQueryBuilder\query-builder.default.css" />
+    <Content Include="Content\plugins\jQueryBuilder\query-builder.default.min.css" />
     <Content Include="Content\spinner.css" />
     <Content Include="Content\style.css" />
     <Content Include="favicon.ico" />
@@ -313,7 +326,10 @@
     <Content Include="fonts\font-awesome\scss\_variables.scss" />
     <Fakes Include="Fakes\X.PagedList.Mvc.fakes" />
     <None Include="Scripts\jquery-3.1.1.intellisense.js" />
+    <Content Include="Scripts\app.js" />
     <Content Include="Scripts\app\inspinia.js" />
+    <Content Include="Scripts\bootstrap-datetimepicker.js" />
+    <Content Include="Scripts\bootstrap-datetimepicker.min.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Scripts\jquery-3.1.1.js" />
@@ -321,6 +337,7 @@
     <Content Include="Scripts\jquery-3.1.1.slim.js" />
     <Content Include="Scripts\jquery-3.1.1.slim.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
+    <Content Include="Scripts\jquery-sortable.js" />
     <Content Include="Scripts\jquery.signalR-2.2.1.js" />
     <Content Include="Scripts\jquery.signalR-2.2.1.min.js" />
     <Content Include="Scripts\jquery.validate.js" />
@@ -328,9 +345,20 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="Scripts\moment-with-locales.js" />
+    <Content Include="Scripts\moment-with-locales.min.js" />
+    <Content Include="Scripts\moment.js" />
+    <Content Include="Scripts\moment.min.js" />
+    <Content Include="Scripts\plugins\canvasJS\canvasjs.min.js" />
+    <Content Include="Scripts\plugins\canvasJS\jquery.canvasjs.min.js" />
     <Content Include="Scripts\plugins\chartjs\Chart.min.js" />
     <Content Include="Scripts\plugins\datatables\datatables.min.js" />
+    <Content Include="Scripts\plugins\bootstrapDatepicker\bootstrap-datepicker.min.js" />
     <Content Include="Scripts\plugins\jasny\jasny-bootstrap.min.js" />
+    <Content Include="Scripts\plugins\jQueryBuilder\query-builder.js" />
+    <Content Include="Scripts\plugins\jQueryBuilder\query-builder.min.js" />
+    <Content Include="Scripts\plugins\jQueryBuilder\query-builder.standalone.js" />
+    <Content Include="Scripts\plugins\jQueryBuilder\query-builder.standalone.min.js" />
     <Content Include="Scripts\plugins\metisMenu\metisMenu.min.js" />
     <Content Include="Scripts\plugins\pace\pace.min.js" />
     <Content Include="Scripts\plugins\slimscroll\jquery.slimscroll.min.js" />
@@ -338,6 +366,9 @@
     <Content Include="Scripts\respond.matchmedia.addListener.js" />
     <Content Include="Scripts\respond.matchmedia.addListener.min.js" />
     <Content Include="Scripts\respond.min.js" />
+    <Content Include="Scripts\sql-parser.js" />
+    <Content Include="Scripts\sql-parser.min.js" />
+    <Content Include="Scripts\utils.js" />
     <Content Include="Scripts\_references.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
@@ -358,6 +389,8 @@
     <Content Include="Views\Records\Manage.cshtml" />
     <Content Include="Views\Records\SampleGraph.cshtml" />
     <Content Include="Views\Shared\_Loading.cshtml" />
+    <Content Include="Views\Queries\Index.cshtml" />
+    <Content Include="Views\Shared\_ChartWithTable.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

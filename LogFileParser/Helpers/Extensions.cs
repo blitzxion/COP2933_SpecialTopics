@@ -2,8 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Web;
 using System.Web.Mvc;
 
@@ -402,6 +406,152 @@ namespace LogFileParser
 		/// A regular expression for validating that string is a positive number GREATER THAN zero.
 		/// </summary>
 		public static readonly Regex PositiveNumberRegex = new Regex(@"^[1-9]+[0-9]*$");
+	}
+
+	public static class EntityExetensions
+	{
+		public static IQueryable<T> SelectDynamic<T>(this IQueryable<T> source, IEnumerable<string> fieldNames)
+		{
+			Dictionary<string, PropertyInfo> sourceProperties = fieldNames.ToDictionary(name => name, name => source.ElementType.GetProperty(name));
+			Type dynamicType = LinqRuntimeTypeBuilder.GetDynamicType(sourceProperties.Values);
+
+			ParameterExpression sourceItem = Expression.Parameter(source.ElementType, "t");
+			IEnumerable<MemberBinding> bindings = dynamicType.GetFields().Select(p => Expression.Bind(p, Expression.Property(sourceItem, sourceProperties[p.Name]))).OfType<MemberBinding>();
+
+			Expression selector = Expression.Lambda(Expression.MemberInit(Expression.New(dynamicType.GetConstructor(Type.EmptyTypes)), bindings), sourceItem);
+
+			return source.Provider.CreateQuery<T>(Expression.Call(
+				typeof(Queryable), 
+				"Select", 
+				new Type[] {
+					source.ElementType,
+					dynamicType
+				}, 
+				Expression.Constant(source), 
+				selector
+			));
+		}
+
+		public static IEnumerable<IGrouping<string, T>> GroupBy<T>(this IEnumerable<T> source, params string[] properties)
+		{
+			return source.GroupBy(GetGroupKey<T>(properties).Compile());
+		}
+
+		public static IQueryable<IGrouping<string, T>> GroupBy<T>(this IQueryable<T> source, params string[] properties)
+		{
+			return source.GroupBy(GetGroupKey<T>(properties));
+		}
+
+		public static IQueryable<IGrouping<string, T>> GroupBy<T>(this IQueryable<T> source, IEnumerable<string> properties)
+		{
+			return source.GroupBy(GetGroupKey<T>(properties.ToArray()));
+		}
+
+		private static Expression<Func<T, string>> GetGroupKey<T>(params string[] properties)
+		{
+			if (!properties.Any())
+				throw new ArgumentException(
+					"At least one property needs to be specified", "properties");
+
+			var parameter = Expression.Parameter(typeof(T));
+			var propertyExpressions = properties.Select(x => GetDeepPropertyExpression(parameter, x)).ToArray();
+
+			Expression body = null;
+			if (propertyExpressions.Length == 1)
+				body = propertyExpressions[0];
+			else
+			{
+				var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string) });
+				var separator = Expression.Constant(";");
+				body = propertyExpressions.Aggregate((x, y) => Expression.Call(concatMethod, x, separator, y));
+			}
+
+			return Expression.Lambda<Func<T, string>>(body, parameter);
+		}
+
+		private static Expression GetDeepPropertyExpression( Expression initialInstance, string property)
+		{
+			Expression result = null;
+			foreach (var propertyName in property.Split('.'))
+			{
+				Expression instance = result;
+				if (instance == null)
+					instance = initialInstance;
+				result = Expression.Property(instance, propertyName);
+			}
+			return result;
+		}
+
+	}
+
+	public static class LinqRuntimeTypeBuilder
+	{
+		//private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+		private static AssemblyName assemblyName = new AssemblyName() { Name = "DynamicLinqTypes" };
+		private static ModuleBuilder moduleBuilder = null;
+		private static Dictionary<string, Type> builtTypes = new Dictionary<string, Type>();
+
+		static LinqRuntimeTypeBuilder()
+		{
+			moduleBuilder = Thread.GetDomain().DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run).DefineDynamicModule(assemblyName.Name);
+		}
+
+		private static string GetTypeKey(Dictionary<string, Type> fields)
+		{
+			//TODO: optimize the type caching -- if fields are simply reordered, that doesn't mean that they're actually different types, so this needs to be smarter
+			string key = string.Empty;
+			foreach (var field in fields)
+				key += field.Key + ";" + field.Value.Name + ";";
+
+			return key;
+		}
+
+		public static Type GetDynamicType(Dictionary<string, Type> fields)
+		{
+			if (null == fields)
+				throw new ArgumentNullException("fields");
+			if (0 == fields.Count)
+				throw new ArgumentOutOfRangeException("fields", "fields must have at least 1 field definition");
+
+			try
+			{
+				Monitor.Enter(builtTypes);
+				string className = GetTypeKey(fields);
+
+				if (builtTypes.ContainsKey(className))
+					return builtTypes[className];
+
+				TypeBuilder typeBuilder = moduleBuilder.DefineType(className, TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Serializable);
+
+				foreach (var field in fields)
+					typeBuilder.DefineField(field.Key, field.Value, FieldAttributes.Public);
+
+				builtTypes[className] = typeBuilder.CreateType();
+
+				return builtTypes[className];
+			}
+			catch (Exception ex)
+			{
+				//log.Error(ex);
+			}
+			finally
+			{
+				Monitor.Exit(builtTypes);
+			}
+
+			return null;
+		}
+
+
+		private static string GetTypeKey(IEnumerable<PropertyInfo> fields)
+		{
+			return GetTypeKey(fields.ToDictionary(f => f.Name, f => f.PropertyType));
+		}
+
+		public static Type GetDynamicType(IEnumerable<PropertyInfo> fields)
+		{
+			return GetDynamicType(fields.ToDictionary(f => f.Name, f => f.PropertyType));
+		}
 	}
 
 }

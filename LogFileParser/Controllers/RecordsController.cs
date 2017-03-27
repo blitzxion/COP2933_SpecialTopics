@@ -189,12 +189,5 @@ namespace LogFileParser.Controllers
 			return SerializeForJson(data);
 		}
 
-		// Utils
-
-		private JsonResult SerializeForJson(object obj)
-		{
-			return Json(JsonConvert.SerializeObject(obj), JsonRequestBehavior.AllowGet);
-		}
-
 	}
 }

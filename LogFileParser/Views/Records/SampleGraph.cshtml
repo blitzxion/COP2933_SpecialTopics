@@ -98,7 +98,7 @@
 				var chartData = {
 					data: [],
 					toolTip: { shared: true },
-					rangeChanged: SyncHandler,
+					//rangeChanged: SyncHandler,
 					zoomEnabled: true,
 					zoomType: "x",
 				};
@@ -244,7 +244,6 @@
 				});
 			}
 
-
 			function SyncHandler(e) {
 
 				for (var i = 0; i < charts.length; i++) {
@@ -277,9 +276,7 @@
 
 			}
 
-			charts[1]
-
-		}());
+		})();
 	</script>
 
 }

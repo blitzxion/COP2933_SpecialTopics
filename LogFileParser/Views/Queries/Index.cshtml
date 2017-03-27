@@ -1,0 +1,296 @@
+﻿@{
+	ViewBag.Title = "Index";
+}
+
+<div class="wrapper wrapper-content">
+	<div class="row">
+
+		<div class="col-md-12">
+
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Query Builder</h3>
+				</div>
+				<div class="panel-body">
+
+					<!-- SELECT BUILDER -->
+					<div class="row">
+						<div class="col-md-6">
+							<h5>Selected Fields</h5>
+							<ol class="sortaable selectedFields"></ol>
+						</div>
+						<div class="col-md-6">
+							<h5>Available Fields</h5>
+							<ol class="sortaable availableFields"></ol>
+						</div>
+					</div>
+
+					<!-- WHERE BUILDER -->
+					<div id="query-builder"></div>
+
+					<!-- GROUP BUILDER -->
+
+					<div class="text-right">
+
+						<div class="form-inline">
+
+							<!-- LIMIT BUILDER -->
+							<div class="form-group">
+								<label for="limit">Limit</label>
+								<select class="form-control" name="limit" id="limit">
+									<option value="1">1</option>
+									<option value="10">10</option>
+									<option value="100">100</option>
+								</select>
+							</div>
+
+
+							<button class="btn btn-info doDemo">Demo</button>
+							<button class="btn btn-primary doFilter">Apply</button>
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">SQL Output Preview</h3>
+				</div>
+				<div class="panel-body">
+					<pre id="sqlPreview"></pre>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Query Output</h3>
+				</div>
+				<div class="table-responsive">
+					<table id="data-table" class="table table-condensed table-hover">
+						<thead>
+							<tr>
+								<th>Timestamp</th>
+								<th>Message Class</th>
+								<th>Sending IP</th>
+								<th>Receiving IP</th>
+								<th>Country</th>
+								<th>Failed Tests</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+
+
+@section Styles {
+	@Styles.Render("~/Content/bs-datetimepicker")
+	@Styles.Render("~/Content/plugins/queryBuilder")
+}
+
+@section Scripts {
+	@Scripts.Render("~/bundles/jquery-sortable")
+	@Scripts.Render("~/bundles/bs-datetimepicker")
+	@Scripts.Render("~/plugins/queryBuilder")
+
+	<script>
+		(function () {
+
+			var qbElem = $('#query-builder');
+			var qbFilter = @Html.Raw(ViewBag.FilterDefinition);
+			var qbUrl = "@Url.Action("TestQuery")";
+
+			function convertArraysToCommaDelimited(obj) {
+				if (obj != null) {
+					if (obj.hasOwnProperty("value")) {
+						if( Object.prototype.toString.call( obj.value ) === '[object Array]' ) {
+							obj.value = obj.value.join(", ");
+						}
+					}
+					if (obj.hasOwnProperty("rules") && obj.rules != null) {
+						for (var i = 0; i < obj.rules.length; i++) {
+							convertArraysToCommaDelimited(obj.rules[i]);
+						}
+					}
+				}
+			}
+
+			function getBuilderFilterConfig() {
+				// Search out Date and add in plugin/pluginConfig to it
+				$.each(qbFilter, function(){
+					if(this.type == 'date') {
+						this.plugin = 'datetimepicker';
+						this.plugin_config = {
+							format: "M/D/YYYY H:mm:ss",
+							showTodayButton: true,
+						};
+					}
+				});
+				return qbFilter;
+			}
+
+			function getRules() {
+				try {
+
+					var rules = {
+						Select : [],
+						GroupBy: [],
+						Limit : $('#limit').val(),
+						Rules : { }
+					};
+
+					// Select and Group Fields
+					var selectFields = $('.selectedFields').sortable('serialize').get();
+					for(var i in selectFields) {
+						if(selectFields[i].length < 0) continue;
+						var field = selectFields[i].field;
+						rules.Select.push(field);
+						if(selectFields[i].groupSkip == false)
+							rules.GroupBy.push(field);
+					}
+
+					var res =  qbElem.queryBuilder('getRules');
+					convertArraysToCommaDelimited(res);
+
+					rules.rules = res;
+
+					console.log(rules);
+
+					return rules;
+				} catch (ex) {
+					return null;
+				}
+			}
+
+			function updateTable(data) {
+				var table = $('#data-table');
+				var tHeads = table.find("thead tr th");
+				var tBody = table.find('tbody');
+
+				tBody.empty(); // Clear previous results
+
+				$.each(data, function(index, obj) {
+					var tr = $('<tr/>');
+
+					$('<td/>').html(obj.timestampUTC).appendTo(tr);
+					$('<td/>').html(obj.messageClass).appendTo(tr);
+					$('<td/>').html(obj.sendingIP).appendTo(tr);
+
+					$('<td/>').html(obj.receivingIP).appendTo(tr);
+					$('<td/>').html(obj.country).appendTo(tr);
+					$('<td/>').html(obj.failedTestCollection.join()).appendTo(tr);
+
+					tr.appendTo(tBody);
+				});
+			}
+
+			function updateSQLPreview()
+			{
+				var sqlStm = "SELECT ";
+				var config = getRules();
+
+				// SELECT
+				sqlStm += ((config.Select.length <= 0) ? "*" : config.Select.join(", ")) + "\n";
+
+				// FROM
+				sqlStm += "FROM table \n"
+
+				// WHERE
+				sqlStm += "WHERE " + qbElem.queryBuilder("getSQL", false, true).sql;
+
+				// GROUP BY
+				if(config.GroupBy.length > 0)
+					sqlStm += "GROUP BY " + config.GroupBy.join(", ") + "\n";
+
+				// LIMIT
+				sqlStm += "LIMIT " + config.Limit;
+
+				$('#sqlPreview').html(sqlStm);
+			}
+
+			function filterData()
+			{
+				$.ajax({
+					type: 'POST',
+					url: qbUrl,
+					data: JSON.stringify(getRules()),
+					dataType: "json",
+					contentType: "application/json",
+					processData: false,
+					async: true,
+					success: function (data) {
+						updateTable(JSON.parse(data));
+						updateSQLPreview();
+					},
+					error: function (xhr, ajaxOptions, thrownError) {
+						console.log ("request failed", xhr, ajaxOptions, thrownError);
+					},
+				});
+
+			}
+
+			function setSelectFields()
+			{
+				// qbFilter will have the available fields the user can choose from
+				$.each(qbFilter, function(i, item){
+					$('<li/>', { 
+						'data-field' : item.field,
+						'data-group-skip' : false
+					})
+					.text(item.field)
+					.appendTo($('.availableFields'));
+				});
+
+				// I'm just limiting this...
+				$('<li/>', { 
+					'data-field' : 'COUNT(*)', 
+					'data-group-skip' : true 
+				})
+				.text("COUNT(*)")
+				.appendTo($('.availableFields'));
+
+			}
+
+			// Render the Query Builder
+			qbElem.queryBuilder({
+				plugins: ['bt-tooltip-errors', 'filter-description'],
+				allow_empty: true,
+				filters: getBuilderFilterConfig(),
+				rules: { condition: 'AND', rules: [] } // Default startup
+			});
+
+			$('.doDemo').on('click', function(){
+
+				var sql = "MessageClass LIKE('%Spam%') AND TimestampUTC BETWEEN '12/1/2016 0:00:00' AND '12/5/2016 18:30:00' AND ( SendingIP LIKE('50.134.%') OR SendingIP LIKE('4.6.%') )";
+
+				qbElem.queryBuilder('setRulesFromSQL', sql);
+
+			});
+
+			$('.doFilter').on('click', function(){
+				filterData();
+			});
+
+
+			setSelectFields();
+			var sortOptions = { group: 'table-fields' };
+			$('.availableFields').sortable(sortOptions);
+			$('.selectedFields').sortable(sortOptions);
+
+			// Send off request to filter data, should just return all data at this point????
+			filterData();
+
+		})();
+	</script>
+}

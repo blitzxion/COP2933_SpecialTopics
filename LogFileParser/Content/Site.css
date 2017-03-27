@@ -1,1 +1,51 @@
-﻿
+﻿body.dragging, body.dragging * {
+	cursor: move !important;
+}
+
+.dragged {
+	position: absolute;
+	opacity: 0.5;
+	z-index: 2000;
+}
+
+ol.sortaable {
+	margin: 0 0 9px 0;
+	min-height: 10px;
+	list-style-type: none;
+	border:1px solid #ccc;
+	padding:0;
+}
+
+	ol.sortaable li {
+		display: block;
+		cursor: move;
+		margin: 5px;
+		padding: 5px;
+		border: 1px solid #cccccc;
+		color: #0088cc;
+		background: #eeeeee;
+	}
+
+		ol.sortaable li.placeholder {
+			position: relative;
+			margin: 0;
+			padding: 0;
+			border: none;
+		}
+
+			ol.sortaable li.placeholder:before {
+				position: absolute;
+				content: "";
+				width: 0;
+				height: 0;
+				margin-top: -5px;
+				left: -5px;
+				top: -4px;
+				border: 5px solid transparent;
+				border-left-color: red;
+				border-right: none;
+			}
+
+ol.sortaable.selectedFields:after {
+	content : "If no fields are selected, all fields will be assumed."
+}

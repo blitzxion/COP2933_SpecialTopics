@@ -15,4 +15,278 @@
 		</div>
 	</div>
 
+	<div class="row">
+
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3>MessageData</h3>
+				</div>
+				<div class="panel-body" data-chart="messageData">
+					@Html.Partial("_Loading")
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3>MessagePercentageData</h3>
+				</div>
+				<div class="panel-body" data-chart="messageDataPerc">
+					@Html.Partial("_Loading")
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-6">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3>MessageClassData</h3>
+				</div>
+				<div class="panel-body" data-chart="messageClassData">
+					@Html.Partial("_Loading")
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-6">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3>SendingIPData</h3>
+				</div>
+				<div class="panel-body" data-table="topSendingIPs">
+					@Html.Partial("_Loading")
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3>TopCountriesData</h3>
+				</div>
+				<div class="panel-body" data-chart="topCountries">
+					@Html.Partial("_Loading")
+				</div>
+			</div>
+		</div>
+
+	</div>
+
 </div>
+
+@section Styles {
+	@Styles.Render("~/Content/plugins/dataTables/dataTablesStyles")
+}
+
+@section Scripts {
+	@Scripts.Render("~/plugins/jqcanvasjs")
+	@Scripts.Render("~/plugins/dataTables")
+
+	<script>
+		(function () {
+
+			var messageChart, messageChartPerc;
+			var charts = [];
+
+			LoadMetrics("@Url.Action("GetMessageMetrics", "Records")", function (data) {
+
+				var chartDiv = $('<div/>')
+					.attr("id", "messageData")
+					.css({
+						width: '100%',
+						height: '350px'
+					});
+
+				var chartPercDiv = chartDiv.clone();
+				chartPercDiv.attr("id", "messageDataPerc");
+
+				$('[data-chart="messageData"]').empty().append(chartDiv);
+				$('[data-chart="messageDataPerc"]').empty().append(chartPercDiv);
+
+				var chartData = {
+					data: [],
+					toolTip: { shared: true },
+					//rangeChanged: SyncHandler,
+					zoomEnabled: true,
+					zoomType: "x",
+				};
+				var chartPercData = $.extend(true, {}, chartData);
+
+				$.each(data.data, function (index, value) {
+
+					var dataSet = { type: "stackedColumn", dataPoints: [] },
+						dataPercSet = {
+							type: "stackedColumn100",
+							toolTipContent: "<span style='\"'color: {color};'\"'>{name}:</span> {y} (#percent %)",
+							dataPoints: []
+						};
+
+					$.each(value, function (time, count) {
+						var d = {
+							x: new Date(Number(time)),
+							y: count,
+							name: index
+						};
+						dataSet.dataPoints.push(d);
+						dataPercSet.dataPoints.push(d);
+					});
+
+					chartData.data.push(dataSet);
+					chartPercData.data.push(dataPercSet);
+
+				});
+
+				chartDiv.CanvasJSChart(chartData);
+				chartPercDiv.CanvasJSChart(chartPercData);
+
+				charts.push($('#messageData').CanvasJSChart());
+				charts.push($('#messageDataPerc').CanvasJSChart());
+
+			});
+
+			LoadMetrics("@Url.Action("GetMessageClassMetrics", "Records")", function (data) {
+
+				var chartDiv = $('<div/>')
+					.attr("id", "messageClassData")
+					.css({
+						width: '100%',
+						height: '350px'
+					});
+
+				$('[data-chart="messageClassData"]').empty().append(chartDiv);
+
+				var dataPoints = [];
+				$.each(data, function (index, obj) {
+					dataPoints.push({
+						y: obj.Count,
+						indexLabel: obj.MessageClass
+					});
+				});
+
+				var chartData = {
+					data: [{
+						type: "doughnut",
+						dataPoints: dataPoints
+					}],
+					//animationEnabled: true,
+				};
+
+				chartDiv.CanvasJSChart(chartData);
+			});
+
+			LoadMetrics("@Url.Action("GetTopSendingIPs", "Records")", function (data) {
+
+				var table = $('<table/>')
+					.attr("id", "topSendingIPTable")
+					.addClass("table table-striped table-bordered table-hover");
+				var tHead = $('<thead/>');
+				var tBody = $('<tbody/>');
+				var tHeaders = $('<tr/>')
+					.append($('<th/>').text('Sending IP'))
+					.append($('<th/>').text('Count'));
+
+				tHead.append(tHeaders);
+
+				$.each(data, function (index, obj) {
+
+					var tRow = $('<tr/>')
+						.append($('<td/>').text(obj.SendingIP))
+						.append($('<td/>').text(obj.Count));
+
+					tBody.append(tRow);
+				});
+
+
+				table.append(tHead);
+				table.append(tBody);
+
+				table.DataTable();
+
+				table.insertAfter($('[data-table="topSendingIPs"]').empty());
+				$('[data-table="topSendingIPs"]').remove();
+
+			});
+
+			LoadMetrics("@Url.Action("GetTopSendingCountries", "Records")", function (data) {
+
+				var chartDiv = $('<div/>')
+					.attr("id", "topCountries")
+					.css({
+						width: '100%',
+						height: '350px'
+					});
+
+				$('[data-chart="topCountries"]').empty().append(chartDiv);
+
+				var dataPoints = [];
+				$.each(data, function (index, obj) {
+					dataPoints.push({
+						y: obj.Count,
+						label: obj.Country
+					});
+				});
+
+				var chartData = {
+					data: [{
+						type: "column",
+						dataPoints: dataPoints
+					}],
+				};
+
+				chartDiv.CanvasJSChart(chartData);
+
+			});
+
+			// Utils
+
+			function LoadMetrics(url, onSuccess) {
+				$.ajax({
+					url: url,
+					dataType: 'json',
+					success: function (data) {
+						var jData = JSON.parse(data);
+
+						if (onSuccess)
+							onSuccess(jData);
+					}
+				});
+			}
+
+			function SyncHandler(e) {
+
+				for (var i = 0; i < charts.length; i++) {
+					var chart = charts[i];
+
+					//if (!chart.options.axisX) chart.options.axisX = {};
+					//if (!chart.options.axisY) chart.options.axisY = {};
+
+					if (e.trigger === "reset") {
+
+						chart.options.axisX.viewportMinimum = chart.options.axisX.viewportMaximum = null;
+						chart.options.axisY.viewportMinimum = chart.options.axisY.viewportMaximum = null;
+
+						chart.render();
+
+					} else if (chart !== e.chart) {
+
+						console.log(e, chart);
+
+						//chart.options.axisX.viewportMinimum = e.axisX.viewportMinimum;
+						//chart.options.axisX.viewportMaximum = e.axisX.viewportMaximum;
+						//chart.options.axisY.viewportMinimum = e.axisY.viewportMinimum;
+						//chart.options.axisY.viewportMaximum = e.axisY.viewportMaximum;
+
+						chart.render();
+
+					}
+
+				}
+
+			}
+
+		})();
+	</script>
+
+}

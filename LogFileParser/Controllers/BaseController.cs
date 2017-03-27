@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace LogFileParser.Controllers
 {
@@ -87,6 +89,17 @@ namespace LogFileParser.Controllers
 		public void SetRedirectSuccess(string message)
 		{
 			TempData["success"] = message;
+		}
+
+		protected virtual JsonResult SerializeForJson(object obj)
+		{
+			JsonSerializerSettings JSONSettings = new JsonSerializerSettings
+			{
+				ContractResolver = new CamelCasePropertyNamesContractResolver(),
+				ReferenceLoopHandling = ReferenceLoopHandling.Ignore // Don't go crazy here.
+			};
+
+			return Json(JsonConvert.SerializeObject(obj, JSONSettings), JsonRequestBehavior.AllowGet);
 		}
 
 	}
