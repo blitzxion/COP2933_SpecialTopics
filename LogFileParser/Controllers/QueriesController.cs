@@ -9,6 +9,8 @@ using LogFileParser.ViewModels;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Castle.DynamicLinqQueryBuilder;
+using System.Linq.Expressions;
+using System.Linq.Dynamic;
 
 namespace LogFileParser.Controllers
 {
@@ -35,20 +37,14 @@ namespace LogFileParser.Controllers
 			// LIMIT
 			query = query.Take(filterRule.Limit);
 
-			// SELECT 
-			if (filterRule.Select != null && filterRule.Select.Any())
-			{
-				// Do something with the properties
-				query = query.SelectDynamic(filterRule.Select);
-			}
-
 			// GROUP BY, RABBLE
 			if(filterRule.GroupBy != null && filterRule.GroupBy.Any())
 			{
 				// Do something with the properties
-				var groupQuery = query.GroupBy(filterRule.GroupBy);
-				// Since we're the last here, we're going to flatten the group results
-				results = groupQuery.SelectMany(x => x).ToList();
+				query = query.GroupBy(filterRule.GroupBy).SelectMany(x => x);
+				//var selQuery = query.Select("new (" + string.Join(", ", filterRule.Select) + ")");
+				
+				results = query.ToList();
 			}
 			else
 			{

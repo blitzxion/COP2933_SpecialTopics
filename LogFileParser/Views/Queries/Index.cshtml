@@ -14,7 +14,7 @@
 				<div class="panel-body">
 
 					<!-- SELECT BUILDER -->
-					<div class="row">
+					@*<div class="row">
 						<div class="col-md-6">
 							<h5>Selected Fields</h5>
 							<ol class="sortaable selectedFields"></ol>
@@ -23,12 +23,10 @@
 							<h5>Available Fields</h5>
 							<ol class="sortaable availableFields"></ol>
 						</div>
-					</div>
+					</div>*@
 
 					<!-- WHERE BUILDER -->
 					<div id="query-builder"></div>
-
-					<!-- GROUP BUILDER -->
 
 					<div class="text-right">
 
@@ -151,9 +149,11 @@
 					};
 
 					// Select and Group Fields
-					var selectFields = $('.selectedFields').sortable('serialize').get();
+					var selectFields = $('.selectedFields').sortable('serialize').get()[0];
+
+					console.log(selectFields);
+
 					for(var i in selectFields) {
-						if(selectFields[i].length < 0) continue;
 						var field = selectFields[i].field;
 						rules.Select.push(field);
 						if(selectFields[i].groupSkip == false)
@@ -257,7 +257,7 @@
 					'data-field' : 'COUNT(*)', 
 					'data-group-skip' : true 
 				})
-				.text("COUNT(*)")
+				.text("COUNT()")
 				.appendTo($('.availableFields'));
 
 			}
