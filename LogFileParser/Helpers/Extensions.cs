@@ -410,27 +410,27 @@ namespace LogFileParser
 
 	public static class EntityExetensions
 	{
-		public static IQueryable<T> SelectDynamic<T>(this IQueryable<T> source, IEnumerable<string> fieldNames)
-		{
-			Dictionary<string, PropertyInfo> sourceProperties = fieldNames.ToDictionary(name => name, name => source.ElementType.GetProperty(name));
-			Type dynamicType = LinqRuntimeTypeBuilder.GetDynamicType(sourceProperties.Values);
+		//public static IQueryable<T> SelectDynamic<T>(this IQueryable<T> source, IEnumerable<string> fieldNames)
+		//{
+		//	Dictionary<string, PropertyInfo> sourceProperties = fieldNames.ToDictionary(name => name, name => source.ElementType.GetProperty(name));
+		//	Type dynamicType = LinqRuntimeTypeBuilder.GetDynamicType(sourceProperties.Values);
 
-			ParameterExpression sourceItem = Expression.Parameter(source.ElementType, "t");
-			IEnumerable<MemberBinding> bindings = dynamicType.GetFields().Select(p => Expression.Bind(p, Expression.Property(sourceItem, sourceProperties[p.Name]))).OfType<MemberBinding>();
+		//	ParameterExpression sourceItem = Expression.Parameter(source.ElementType, "t");
+		//	IEnumerable<MemberBinding> bindings = dynamicType.GetFields().Select(p => Expression.Bind(p, Expression.Property(sourceItem, sourceProperties[p.Name]))).OfType<MemberBinding>();
 
-			Expression selector = Expression.Lambda(Expression.MemberInit(Expression.New(dynamicType.GetConstructor(Type.EmptyTypes)), bindings), sourceItem);
+		//	Expression selector = Expression.Lambda(Expression.MemberInit(Expression.New(dynamicType.GetConstructor(Type.EmptyTypes)), bindings), sourceItem);
 
-			return source.Provider.CreateQuery<T>(Expression.Call(
-				typeof(Queryable), 
-				"Select", 
-				new Type[] {
-					source.ElementType,
-					dynamicType
-				}, 
-				Expression.Constant(source), 
-				selector
-			));
-		}
+		//	return source.Provider.CreateQuery<T>(Expression.Call(
+		//		typeof(Queryable), 
+		//		"Select", 
+		//		new Type[] {
+		//			source.ElementType,
+		//			dynamicType
+		//		}, 
+		//		Expression.Constant(source), 
+		//		selector
+		//	));
+		//}
 
 		public static IEnumerable<IGrouping<string, T>> GroupBy<T>(this IEnumerable<T> source, params string[] properties)
 		{
