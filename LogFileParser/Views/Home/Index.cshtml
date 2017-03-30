@@ -51,13 +51,36 @@
 		</div>
 
 		<div class="col-md-6">
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h3>Top Sending IP Addresses</h3>
+			<div class="tabs-container">
+
+				<ul class="nav nav-tabs">
+					<li role="presentation" class="active">
+						<a href="#topSendingIP" aria-controls="topSendingIP" role="tab" data-toggle="tab">Top Sending IPs</a>
+					</li>
+					<li role="presentation">
+						<a href="#sendingIPPerc" aria-controls="sendingIPPerc" role="tab" data-toggle="tab">IPs over Percentage</a>
+					</li>
+				</ul>
+
+				<div class="tab-content">
+					<div role="tabpanel" class="tab-pane active" id="topSendingIP">
+						<div data-table="topSendingIPs">@Html.Partial("_Loading")</div>
+					</div>
+					<div role="tabpanel" class="tab-pane" id="sendingIPPerc">
+						<div class="form-inline">
+							<div class="form-group">
+								<input type="number" min="0" max="100" class="form-control" id="sendingIPPercNumber" value="95" />
+								<select id="sendingIPMessageSelect" class="form-control" data-ajax-load="messageClasses"></select>
+								<button type="button" class="btn btn-primary submitSendingIpPercNumber">Filter</button>
+							</div>
+						</div>
+						<div data-table="sendingIPPerc">@Html.Partial("_Loading")</div>
+					</div>
 				</div>
-				<div class="panel-body" data-table="topSendingIPs">@Html.Partial("_Loading")</div>
+
 			</div>
 		</div>
+
 
 		<div class="col-md-12">
 			<div class="tabs-container">
@@ -72,7 +95,11 @@
 						<div data-chart="topCountries">@Html.Partial("_Loading")</div>
 					</div>
 					<div role="tabpanel" class="tab-pane" id="topCountryMessages">
-						<div><select id="topCountryMessageSelect" data-ajax-load="messageClasses"></select></div>
+						<div class="form-inline">
+							<div class="form-group">
+								<select id="topCountryMessageSelect" class="form-control" data-ajax-load="messageClasses"></select>
+							</div>
+						</div>
 						<div data-chart="topCountryMessages">@Html.Partial("_Loading")</div>
 					</div>
 				</div>
@@ -96,6 +123,10 @@
 
 	<script>
 		(function () {
+
+			///////////////////////////
+			// Main Stuff
+			///////////////////////////
 
 			var messageChart, messageChartPerc;
 			var charts = [];
@@ -128,7 +159,7 @@
 
 					var dataSet = { type: "stackedColumn", dataPoints: [] },
 						dataPercSet = {
-							type: "stackedColumn100",
+							type: "stackedArea100",
 							toolTipContent: "<span style='\"'color: {color};'\"'>{name}:</span> {y} (#percent %)",
 							dataPoints: []
 						};
@@ -140,6 +171,8 @@
 							name: index
 						};
 						dataSet.dataPoints.push(d);
+
+						delete d.x;
 						dataPercSet.dataPoints.push(d);
 					});
 
@@ -190,7 +223,7 @@
 
 				var table = $('<table/>')
 					.attr("id", "topSendingIPTable")
-					.addClass("table table-striped table-bordered table-hover");
+					.addClass("table table-striped table-condensed table-bordered table-hover");
 				var tHead = $('<thead/>');
 				var tBody = $('<tbody/>');
 				var tHeaders = $('<tr/>')
@@ -248,13 +281,17 @@
 
 			});
 
+			////////////////////////////////////
 			// Events and Element Events
+			////////////////////////////////////
 
+			// Top Country By Message Type
+			var tCMSUrl = "@Url.Action("GetTopSendingCountriesOfMessageClass", "Records")";
 			$('#topCountryMessageSelect').on('change', function () {
 
 				var msgClass = $(this).val();
 
-				LoadMetricsWithData("@Url.Action("GetTopSendingCountriesOfMessageClass", "Records")", { msgClass: msgClass }, function (data) {
+				LoadMetricsWithData(tCMSUrl, { msgClass: msgClass }, function (data) {
 
 					var chartDiv = $('<div/>')
 					.attr("id", "topCountryMessageType")
@@ -286,8 +323,65 @@
 
 			});
 
+			// SendingIP By Message Type and Over Percentage
+			var sIPPercUrl = "@Url.Action("GetMessageClassOverPercentage", "Records")";
+			$('.submitSendingIpPercNumber').on('click', function () {
 
+				// Get the number from the input
+				var percNum = $('#sendingIPPercNumber').val();
+				if (percNum < 0) percNum = 0;
+				if (percNum > 100) percNum = 100; // Sanity Check
+
+				// Get the message type
+				var msgClass = $('#sendingIPMessageSelect').val();
+
+				var parent = $('[data-table="sendingIPPerc"]');
+				var table = $('#tbl_IPPerc');
+
+				parent.show();
+				table.hide();
+
+				LoadMetricsWithData(sIPPercUrl, { msgClass: msgClass, perc: percNum }, function (data) {
+
+					console.log("Loading table with: ", data);
+
+					table = CreateTable(parent, "tbl_IPPerc", ['Sending IP', 'Total of Type', 'Total', 'Percentage']);
+					table.hide();
+
+					parent.hide();
+
+					var tBody = table.find("tbody");
+					tBody.empty();
+
+					var tooMany = false;
+					$.each(data, function (i, obj) {
+
+						tooMany = i >= 10;
+
+						if (tooMany) return;
+
+						var tRow = $('<tr/>')
+							.append($('<td/>').text(obj.sendingIP))
+							.append($('<td/>').text(obj.totalOfType))
+							.append($('<td/>').text(obj.total))
+							.append($('<td/>').text(obj.percOfType));
+
+						tBody.append(tRow);
+					});
+
+					if (tooMany) {
+						tBody.append($('<tr/>').append($('<td/>').attr('colspan','4').text('More than 10 results returned, limiting')));
+					}
+
+					table.show();
+
+				});
+
+			});
+
+			//////////////////
 			// Utils
+			//////////////////
 
 			$('select[data-ajax-load]').each(function () {
 				var elem = $(this);
@@ -296,7 +390,10 @@
 					case "messageClasses":
 						LoadMetrics("@Url.Action("GetMessageClasses", "Records")", function (data) {
 							$.each(data, function (i, obj) {
-								$('<option/>').text(obj).appendTo(elem);
+								$('<option/>', {
+									value: obj,
+									text: obj
+								}).appendTo(elem);
 							});
 						});
 						break;
@@ -318,17 +415,65 @@
 			}
 
 			function LoadMetricsWithData(url, params, onSuccess) {
+
+				console.log("Ajax Request w/Data: ", url, params);
+
 				$.ajax({
 					url: url,
 					dataType: 'json',
 					data: params,
 					success: function (data) {
-						var jData = JSON.parse(data);
+						var jData = [];
+
+						try {
+							jData = JSON.parse(data);
+							console.log("Received Data", jData);
+						} catch (e) {
+							console.log("No data to parse.");
+						}
 
 						if (onSuccess)
 							onSuccess(jData);
+
+						console.log("Finished with ajax call");
+
+					},
+					fail: function (xhr, ajaxOptions, thrownError) {
+						console.log("request failed", xhr, ajaxOptions, thrownError);
 					}
 				});
+
+			}
+
+			function CreateTable(parent, tableId, tableHeaders)
+			{
+				// if we detect that we already have that table out there, we just return the found table
+				if ($("#" + tableId).length > 0)
+					return $("#" + tableId);
+
+				var table = $('<table/>')
+							.attr("id", tableId)
+							.addClass("table table-striped table-condensed table-bordered table-hover");
+
+				var tHead = $('<thead/>');
+				var tBody = $('<tbody/>');
+
+				var tHeaders = $('<tr/>');
+				var columns = [];
+				$.each(tableHeaders, function (i, obj) {
+					tHeaders.append($('<th/>').text(obj));
+					columns.push(obj);
+				});
+
+				tHead.append(tHeaders);
+				table.append(tHead);
+				table.append(tBody);
+
+				parent.after(table);
+
+				//table.DataTable({columns: columns});
+
+				return table;
 			}
 
 		})();

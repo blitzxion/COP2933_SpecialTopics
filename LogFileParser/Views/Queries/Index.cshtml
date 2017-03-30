@@ -14,45 +14,44 @@
 				<div class="panel-body">
 
 					<!-- SELECT BUILDER -->
-
 					@*<div class="row">
-						<div class="col-md-12">
+							<div class="col-md-12">
 
-							<div class="alert alert-warning">
+								<div class="alert alert-warning">
 
-								<table class="table selectFieldsTable">
-									<thead></thead>
-									<tbody>
-										<tr class="field_entry">
-											<td>
-												<select name="select-builder_fields[]" class="form-control selectedField">
-													<option value="">*</option>
-												</select>
-											</td>
-											<td>
-												<select name="select-builder_augmenters[]" class="form-control selectedAug">
-													<option value="">SELECT</option>
-													<option value="sum">SUM</option>
-													<option value="count">COUNT</option>
-													<option value="average">AVERAGE</option>
-												</select>
-											</td>
-											<td>
-												<div class="text-right">
-													<div class="btn-group">
-														<button class="btn btn-success btn-xs addField"><span class="glyphicon glyphicon-plus"></span> Add field</button>
-														<button class="btn btn-danger btn-xs removeField"><span class="glyphicon glyphicon-remove"></span> Delete</button>
+									<table class="table selectFieldsTable">
+										<thead></thead>
+										<tbody>
+											<tr class="field_entry">
+												<td>
+													<select name="select-builder_fields[]" class="form-control selectedField">
+														<option value="">*</option>
+													</select>
+												</td>
+												<td>
+													<select name="select-builder_augmenters[]" class="form-control selectedAug">
+														<option value="">SELECT</option>
+														<option value="sum">SUM</option>
+														<option value="count">COUNT</option>
+														<option value="average">AVERAGE</option>
+													</select>
+												</td>
+												<td>
+													<div class="text-right">
+														<div class="btn-group">
+															<button class="btn btn-success btn-xs addField"><span class="glyphicon glyphicon-plus"></span> Add field</button>
+															<button class="btn btn-danger btn-xs removeField"><span class="glyphicon glyphicon-remove"></span> Delete</button>
+														</div>
 													</div>
-												</div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+
+								</div>
 
 							</div>
-
-						</div>
-					</div>*@
+						</div>*@
 
 					<!-- WHERE BUILDER -->
 					<div id="query-builder"></div>
@@ -65,8 +64,9 @@
 							<div class="form-group">
 								<label for="limit">Limit</label>
 								<select class="form-control" name="limit" id="limit">
-									<option value="1">1</option>
 									<option value="10">10</option>
+									<option value="25" selected="selected">25</option>
+									<option value="50">50</option>
 									<option value="100">100</option>
 								</select>
 							</div>
@@ -99,7 +99,7 @@
 					<h3 class="panel-title">Query Output</h3>
 				</div>
 				<div class="table-responsive">
-					<table id="data-table" class="table table-condensed table-hover">
+					<table id="data-table" class="table table-hover">
 						<thead>
 							<tr>
 								<th>Timestamp</th>
@@ -113,6 +113,24 @@
 						<tbody></tbody>
 					</table>
 				</div>
+
+				<div class="panel-footer">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="text-left">
+								<a href="#" data-page-nav="first" class="btn btn-warning">First Page</a>
+								<a href="#" data-page-nav="previous" class="btn btn-primary">Previous</a>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="text-right">
+								<a href="#" data-page-nav="next" class="btn btn-primary">Next</a>
+								<a href="#" data-page-nav="last" class="btn btn-warning">Last Page</a>
+							</div>
+						</div>
+					</div>
+				</div>
+
 			</div>
 		</div>
 
@@ -129,6 +147,7 @@
 		.removeField {
 			display: none;
 		}
+
 		.field_entry:not(:first-child) .removeField {
 			display: block;
 		}
@@ -144,9 +163,76 @@
 	<script>
 		(function () {
 
+			///////////////////////////
+			// Main Stuff
+			///////////////////////////
+
+
 			var qbElem = $('#query-builder');
 			var qbFilter = @Html.Raw(ViewBag.FilterDefinition);
 			var qbUrl = "@Url.Action("TestQuery")";
+			var qbData = { };
+			var movingPage = 1;
+
+			////////////////////////////////////
+			// Events and Element Events
+			////////////////////////////////////
+
+
+			$('.doDemo').on('click', function(){
+
+				var sql = "MessageClass LIKE('%Spam%') AND TimestampUTC BETWEEN '12/1/2016 0:00:00' AND '12/5/2016 18:30:00' AND ( SendingIP LIKE('50.134.%') OR SendingIP LIKE('4.6.%') )";
+
+				qbElem.queryBuilder('setRulesFromSQL', sql);
+
+			});
+
+			$('.doFilter').on('click', function(){
+				filterData();
+			});
+
+			$('.addField').on('click', function() {
+				var parent = $(this).parents("tr.field_entry");
+				var clone = parent.clone(true);
+				$('table.selectFieldsTable tbody').append(clone);
+				parent.after(clone);
+			});
+
+			$('.removeField').on('click', function() {
+				if($('table.selectFieldsTable tbody tr').length == 1) return; // Don't delete the last remaining row.
+				$(this).parents("tr.field_entry").remove();
+			});
+
+			$('[data-page-nav]').on('click', function() {
+				var direction = $(this).data('page-nav');
+				movingPage = 1; // Always default to the firsrt page, for safety reasons
+				switch(direction) {
+					case "previous":
+						if(qbData.previousPage < 1) return;
+						movingPage = qbData.previousPage;
+						break;
+					case "next":
+						if(qbData.nextPage > qbData.lastPage) return;
+						movingPage = qbData.nextPage;
+						break;
+					case "first":
+						if(qbData.currentPage == 1) return;
+						movingPage = 1;
+						break;
+					case "last":
+						if(qbData.currentPage == qbData.lastPage) return;
+						movingPage = qbData.lastPage;
+						break;
+				}
+
+				filterData();
+			});
+
+			
+			//////////////////
+			// Utils
+			//////////////////
+
 
 			function convertArraysToCommaDelimited(obj) {
 				if (obj != null) {
@@ -180,43 +266,34 @@
 			function getRules() {
 				try {
 
-					var rules = {
-						SelectFields : [],
-						Limit : $('#limit').val(),
-						Rules : { }
-					};
-
-					// Select Fields
-					$('.field_entry').each(function(){ 
-						var selectedField = $(this).find('.selectedField').val();
-						//var selectedAug = $(this).find('.selectedAug').val();
-						rules.SelectFields.push({
-							Name : selectedField,
-							//Augment : selectedAug
-						});
-					});
-
 					var res =  qbElem.queryBuilder('getRules');
 					convertArraysToCommaDelimited(res);
+					
+					var pageLimit = parseInt($("#limit").val()) || 10;
 
-					rules.rules = res;
+					var rules = {
+						limit : pageLimit,
+						page : movingPage,
+						rules : res
+					};
 
 					console.log(rules);
 
 					return rules;
+
 				} catch (ex) {
 					return null;
 				}
 			}
 
-			function updateTable(data) {
+			function updateTable() {
 				var table = $('#data-table');
 				var tHeads = table.find("thead tr th");
 				var tBody = table.find('tbody');
 
 				tBody.empty(); // Clear previous results
 
-				$.each(data, function(index, obj) {
+				$.each(qbData.data, function(index, obj) {
 					var tr = $('<tr/>');
 
 					$('<td/>').html(obj.timestampUTC || "").appendTo(tr);
@@ -237,10 +314,10 @@
 				var config = getRules();
 
 				// SELECT
-				sqlStm += ((config.SelectFields.length <= 0) ? "*" : config.SelectFields.map(function(item) { return item.Name; }).join(", ")) + "\n";
+				//sqlStm += ((config.SelectFields.length <= 0) ? "*" : config.SelectFields.map(function(item) { return item.Name; }).join(", ")) + "\n";
 
 				// FROM
-				sqlStm += "FROM table \n"
+				sqlStm += "SELECT *\nFROM table \n"
 
 				// WHERE
 				sqlStm += "WHERE " + qbElem.queryBuilder("getSQL", false, true).sql;
@@ -249,7 +326,7 @@
 				//if(config.GroupBy.length > 0) sqlStm += "GROUP BY " + config.GroupBy.join(", ") + "\n";
 
 				// LIMIT
-				sqlStm += "LIMIT " + config.Limit;
+				sqlStm += "\nLIMIT " + config.limit;
 
 				$('#sqlPreview').html(sqlStm);
 			}
@@ -265,7 +342,8 @@
 					processData: false,
 					async: true,
 					success: function (data) {
-						updateTable(JSON.parse(data));
+						qbData = JSON.parse(data);
+						updateTable();
 						updateSQLPreview();
 					},
 					error: function (xhr, ajaxOptions, thrownError) {
@@ -290,11 +368,17 @@
 
 			function getSelectedFields() {
 				var selectedFields = [];
-				$('.field_entry').each(function(){ 
+				$('.field_entry').each(function(){
 					selectedFields.push($(this).find('.selectedField').val());
 				});
 				return selectedFields;
 			}
+
+			
+			//////////////////
+			// Init
+			//////////////////
+
 
 			// Render the Query Builder
 			qbElem.queryBuilder({
@@ -304,33 +388,9 @@
 				rules: { condition: 'AND', rules: [] } // Default startup
 			});
 
-			$('.doDemo').on('click', function(){
-
-				var sql = "MessageClass LIKE('%Spam%') AND TimestampUTC BETWEEN '12/1/2016 0:00:00' AND '12/5/2016 18:30:00' AND ( SendingIP LIKE('50.134.%') OR SendingIP LIKE('4.6.%') )";
-
-				qbElem.queryBuilder('setRulesFromSQL', sql);
-
-			});
-
-			$('.doFilter').on('click', function(){
-				filterData();
-			});
-
-
-			setSelectFields();
-			$('.addField').on('click', function() { 
-				var parent = $(this).parents("tr.field_entry");
-				var clone = parent.clone(true);
-				$('table.selectFieldsTable tbody').append(clone);
-				parent.after(clone);
-			});
-			$('.removeField').on('click', function() {
-				if($('table.selectFieldsTable tbody tr').length == 1) return; // Don't delete the last remaining row.
-				$(this).parents("tr.field_entry").remove();
-			});
-
 			// Send off request to filter data, should just return all data at this point????
 			filterData();
+
 
 		})();
 	</script>

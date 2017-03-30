@@ -11,6 +11,7 @@ using Newtonsoft.Json.Serialization;
 using Castle.DynamicLinqQueryBuilder;
 using System.Linq.Expressions;
 using System.Linq.Dynamic;
+using X.PagedList;
 
 namespace LogFileParser.Controllers
 {
@@ -29,30 +30,45 @@ namespace LogFileParser.Controllers
 		[HttpPost]
 		public ActionResult TestQuery(FilteringRules filterRule)
 		{
+			IPagedList<LogRecord> model = null;
+
 			// Prepare for Query Builder, using Filter!
-			List<LogRecord> results = new List<LogRecord>();
-			IQueryable query = AppDbContext.LogRecords.BuildQuery(filterRule.Rules);
+			var query = AppDbContext.LogRecords.BuildQuery(filterRule.Rules);
 
 			// Get this out of the way first, just easier that way
 			// LIMIT
-			query = query.Take(filterRule.Limit);
+			//if(filterRule.Limit.HasValue)
+			//	query = query.Take(filterRule.Limit.GetValueOrDefault(10)); // 10 to be safe
 
 			// Select (only if there are no group by fields)
-			if(filterRule.SelectFields != null && filterRule.SelectFields.Any(x => !string.IsNullOrEmpty(x.Name)))
-			{
-				if(filterRule.SelectFields.Any(x => !string.IsNullOrEmpty(x.Augment)))
-				{
-					// TODO: Figure this crap out...
-				} else
-					query = query.Select($"new ({string.Join(", ", filterRule.SelectFields.Select(x => x.Name))})");
-			}
+			//if(filterRule.SelectFields != null && filterRule.SelectFields.Any(x => !string.IsNullOrEmpty(x.Name)))
+			//{
+			//	if(filterRule.SelectFields.Any(x => !string.IsNullOrEmpty(x.Augment)))
+			//	{
+			//		// TODO: Figure this crap out...
+			//	} else
+			//		query = query.Select($"new ({string.Join(", ", filterRule.SelectFields.Select(x => x.Name))})");
+			//}
 
-			
+			//var jsonResults = JsonConvert.SerializeObject(query, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+			//results = JsonConvert.DeserializeObject<List<LogRecord>>(jsonResults);
 
-			var jsonResults = JsonConvert.SerializeObject(query, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
-			results = JsonConvert.DeserializeObject<List<LogRecord>>(jsonResults);
+			var page = filterRule.Page.GetValueOrDefault(1);
+			var pageSize = filterRule.Limit.GetValueOrDefault(10);
 
-			return SerializeForJson(results);
+			model = query
+				.OrderByDescending(x => x.TimestampUTC)
+				.ToPagedList(page, pageSize);
+
+			var objData = new {
+				data = model,
+				CurrentPage = page,
+				PreviousPage = page - 1,
+				NextPage = page + 1,
+				LastPage = model.PageCount
+			};
+
+			return SerializeForJson(objData);
 		}
 
 		// Utils
@@ -72,23 +88,26 @@ namespace LogFileParser.Controllers
 
 		public class FilteringRules
 		{
-			public List<FilterField> SelectFields { get; set; }
-			public int Limit { get; set; }
+			//public List<FilterField> SelectFields { get; set; }
+			public int? Limit { get; set; }
 			public FilterRule Rules { get; set; }
+
+			public int? Page { get; set; }
 
 			public FilteringRules()
 			{
-				SelectFields = new List<FilterField>();
+				//SelectFields = new List<FilterField>();
 				Limit = 100;
+				Page = 1;
 			}
 
 		}
 
-		public class FilterField
-		{
-			public string Name { get; set; }
-			public string Augment { get; set; }
-		}
+		//public class FilterField
+		//{
+		//	public string Name { get; set; }
+		//	public string Augment { get; set; }
+		//}
 
 	}
 }

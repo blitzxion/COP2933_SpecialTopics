@@ -12,15 +12,21 @@
 			<li class="@Html.IsSelected(controller:"Queries")">
 				<a href="@Url.Action("Index", "Queries")"><i class="fa fa-area-chart"></i> <span class="nav-label" data-i18n="nav.Records">Queries</span> <span class="fa arrow"></span></a>
 				<ul class="nav nav-second-level collapse @Html.IsSelected(controller: "Queries", cssClass: "in")">
+					
 					<li class="@Html.IsSelected("Queries", "Index")"><a href="@Url.Action("Index", "Queries")">New Query</a></li>
+
 					<li class="@Html.IsSelected("Queries", "Static")">
+						
 						<a href="#">Static Queries <span class="fa arrow"></span></a>
+
 						<ul class="nav nav-third-level @Html.IsSelected(controller: "Queries", action:"Static", cssClass: "in")">
 							<li><a href="@Url.Action("Static", "Queries", new { id = "messages" })">Messages</a></li>
 							<li><a href="@Url.Action("Static", "Queries", new { id = "ipaddresses" })">IP Addresses</a></li>
 							<li><a href="@Url.Action("Static", "Queries", new { id = "countries" })">Countries</a></li>
 						</ul>
+
 					</li>
+
 				</ul>
 			</li>
 			<li class="@Html.IsSelected(controller:"Records")">

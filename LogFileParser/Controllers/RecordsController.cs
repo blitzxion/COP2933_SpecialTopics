@@ -212,7 +212,7 @@ namespace LogFileParser.Controllers
 			return SerializeForJson(data);
 		}
 
-		public ActionResult GetIpAddressesOverAppearance(string msgClass, double percentage)
+		public ActionResult GetMessageClassOverPercentage(string msgClass, int perc = 95)
 		{
 			if (string.IsNullOrEmpty(msgClass))
 				return null;
@@ -223,8 +223,36 @@ namespace LogFileParser.Controllers
 
 			using (var context = AppDbContext)
 			{
+				data = context.LogRecords
+					.GroupBy(x => new { x.SendingIP, x.MessageClass })
+					.Select(x => new
+					{
+						x.Key.SendingIP,
+						x.Key.MessageClass,
+						Total = x.Count()
+					})
+					.ToList()
+					.GroupBy(x => x.SendingIP)
+					.Select(x =>
+					{
+						var totalType = x.Where(v => v.MessageClass == msgClass).Sum(v => v.Total);
+						var total = x.Sum(v => v.Total);
+						var percType = totalType * 100 / total;
 
-
+						return new
+						{
+							SendingIP = x.Key,
+							MessageType = msgClass,
+							TotalOfType = totalType,
+							Total = total,
+							PercOfType = percType
+						};
+					})
+					.Where(x => x.PercOfType >= perc)
+					.OrderByDescending(x => x.PercOfType)
+					.Take(20) // Artifical limiting
+					.ToList() // Need to make it usable!
+					;
 
 			}
 
@@ -240,7 +268,6 @@ namespace LogFileParser.Controllers
 
 			return SerializeForJson(data);
 		}
-
 
 	}
 }
