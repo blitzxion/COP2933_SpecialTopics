@@ -243,6 +243,7 @@
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\jquery-jvectormap.css" />
     <Content Include="Content\PagedList.css" />
     <Content Include="Content\patterns\1.png" />
     <Content Include="Content\patterns\2.png" />
@@ -267,6 +268,7 @@
     <Content Include="Content\plugins\jQueryBuilder\query-builder.dark.min.css" />
     <Content Include="Content\plugins\jQueryBuilder\query-builder.default.css" />
     <Content Include="Content\plugins\jQueryBuilder\query-builder.default.min.css" />
+    <Content Include="Content\sky.png" />
     <Content Include="Content\spinner.css" />
     <Content Include="Content\style.css" />
     <Content Include="favicon.ico" />
@@ -321,6 +323,15 @@
     <Content Include="fonts\font-awesome\scss\_stacked.scss" />
     <Content Include="fonts\font-awesome\scss\_variables.scss" />
     <Fakes Include="Fakes\X.PagedList.Mvc.fakes" />
+    <Content Include="Content\world-110m.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\d3\d3.js" />
+    <Content Include="Scripts\d3\d3.min.js" />
+    <Content Include="Scripts\d3\README.md" />
+    <Content Include="Scripts\d3\LICENSE" />
+    <Content Include="Scripts\d3\CHANGES.md" />
+    <Content Include="Scripts\d3\API.md" />
     <None Include="Scripts\jquery-3.1.1.intellisense.js" />
     <Content Include="Scripts\app.js" />
     <Content Include="Scripts\app\inspinia.js" />
@@ -328,11 +339,16 @@
     <Content Include="Scripts\bootstrap-datetimepicker.min.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="Scripts\d3\topojson.v1.min.js" />
     <Content Include="Scripts\jquery-3.1.1.js" />
     <Content Include="Scripts\jquery-3.1.1.min.js" />
     <Content Include="Scripts\jquery-3.1.1.slim.js" />
     <Content Include="Scripts\jquery-3.1.1.slim.min.js" />
+    <Content Include="Scripts\jquery-jvectormap.js" />
+    <Content Include="Scripts\jquery-jvectormap.min.js" />
+    <Content Include="Scripts\jquery-jvectormap.min.js.map" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
+    <Content Include="Scripts\jquery-mousewheel.js" />
     <Content Include="Scripts\jquery-sortable.js" />
     <Content Include="Scripts\jquery.signalR-2.2.1.js" />
     <Content Include="Scripts\jquery.signalR-2.2.1.min.js" />
@@ -340,11 +356,21 @@
     <Content Include="Scripts\jquery.validate.min.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A2\jquery-jvectormap-world-mill-en-US.js" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A2\jquery-jvectormap-world-mill-en-US.min.js" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-de-DE.js" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-de-DE.min.js" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-en-US.js" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-en-US.min.js" />
+    <Content Include="Scripts\jVectorMaps\world-timezone\jquery-jvectormap-world-timezones.js" />
+    <Content Include="Scripts\jVectorMaps\world-timezone\jquery-jvectormap-world-timezones.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\moment-with-locales.js" />
     <Content Include="Scripts\moment-with-locales.min.js" />
     <Content Include="Scripts\moment.js" />
     <Content Include="Scripts\moment.min.js" />
+    <Content Include="Scripts\planetaryjs.js" />
+    <Content Include="Scripts\planetaryjs.min.js" />
     <Content Include="Scripts\plugins\canvasJS\canvasjs.min.js" />
     <Content Include="Scripts\plugins\canvasJS\jquery.canvasjs.min.js" />
     <Content Include="Scripts\plugins\chartjs\Chart.min.js" />
@@ -387,6 +413,11 @@
     <Content Include="Views\Shared\_Loading.cshtml" />
     <Content Include="Views\Queries\Index.cshtml" />
     <Content Include="Views\Shared\_ChartWithTable.cshtml" />
+    <Content Include="Views\Queries\CountryMessages.cshtml" />
+    <Content Include="Scripts\jVectorMaps\world-timezone\jquery-jvectormap-world-timezones.min.js.map" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-en-US.min.js.map" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-de-DE.min.js.map" />
+    <Content Include="Scripts\jVectorMaps\world-ISO-A2\jquery-jvectormap-world-mill-en-US.min.js.map" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

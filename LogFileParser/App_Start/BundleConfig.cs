@@ -86,6 +86,19 @@ namespace LogFileParser
 			bundles.Add(new ScriptBundle("~/bundles/jquery-sortable").Include(
 				"~/Scripts/jquery-sortable.js"));
 
+			//bundles.Add(new ScriptBundle("~/bundles/d3").Include("~/Scripts/d3/d3.min.js"));
+
+			// Planetary.js
+			bundles.Add(new ScriptBundle("~/bundles/planetary").Include(
+				"~/Scripts/planetaryjs.js"));
+
+			// jVectorMaps
+			bundles.Add(new ScriptBundle("~/bundles/jvectormaps").Include(
+				"~/Scripts/jquery-jvectormap.min.js"));
+
+			bundles.Add(new StyleBundle("~/Content/jvectormaps").Include(
+				"~/Content/jquery-jvectormap.css"));
+
 			// CSS style (bootstrap/inspinia)
 			bundles.Add(new StyleBundle("~/Content/css").Include(
 				"~/Content/bootstrap.min.css",

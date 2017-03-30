@@ -57,9 +57,9 @@
 					<li role="presentation" class="active">
 						<a href="#topSendingIP" aria-controls="topSendingIP" role="tab" data-toggle="tab">Top Sending IPs</a>
 					</li>
-					<li role="presentation">
+					@*<li role="presentation">
 						<a href="#sendingIPPerc" aria-controls="sendingIPPerc" role="tab" data-toggle="tab">IPs over Percentage</a>
-					</li>
+					</li>*@
 				</ul>
 
 				<div class="tab-content">
@@ -74,7 +74,7 @@
 								<button type="button" class="btn btn-primary submitSendingIpPercNumber">Filter</button>
 							</div>
 						</div>
-						<div data-table="sendingIPPerc">@Html.Partial("_Loading")</div>
+						@*<div data-table="sendingIPPerc">@Html.Partial("_Loading")</div>*@
 					</div>
 				</div>
 
@@ -87,7 +87,7 @@
 
 				<ul class="nav nav-tabs">
 					<li role="presentation" class="active"><a href="#topCountries" aria-controls="topCountries" role="tab" data-toggle="tab">Top 10 Countries</a></li>
-					<li role="presentation"><a href="#topCountryMessages" aria-controls="topCountries" role="tab" data-toggle="tab">of Message Type</a></li>
+					<li role="presentation"><a href="#topCountryMessages" aria-controls="topCountries" role="tab" data-tab-name="topCountryMessages" data-toggle="tab">of Message Type</a></li>
 				</ul>
 
 				<div class="tab-content">
@@ -159,7 +159,7 @@
 
 					var dataSet = { type: "stackedColumn", dataPoints: [] },
 						dataPercSet = {
-							type: "stackedArea100",
+							type: "stackedColumn100",
 							toolTipContent: "<span style='\"'color: {color};'\"'>{name}:</span> {y} (#percent %)",
 							dataPoints: []
 						};
@@ -171,8 +171,6 @@
 							name: index
 						};
 						dataSet.dataPoints.push(d);
-
-						delete d.x;
 						dataPercSet.dataPoints.push(d);
 					});
 
@@ -291,6 +289,8 @@
 
 				var msgClass = $(this).val();
 
+				console.log('topCountryMessageSelect', 'change', msgClass);
+
 				LoadMetricsWithData(tCMSUrl, { msgClass: msgClass }, function (data) {
 
 					var chartDiv = $('<div/>')
@@ -379,16 +379,15 @@
 
 			});
 
-			//////////////////
-			// Utils
-			//////////////////
-
+			var msgClassesUrl = "@Url.Action("GetMessageClasses", "Records")";
 			$('select[data-ajax-load]').each(function () {
 				var elem = $(this);
 				var loadWhat = elem.data('ajax-load');
+				//var doWhat = elem.data('ajax-done');
+
 				switch (loadWhat) {
 					case "messageClasses":
-						LoadMetrics("@Url.Action("GetMessageClasses", "Records")", function (data) {
+						LoadMetrics(msgClassesUrl, function (data) {
 							$.each(data, function (i, obj) {
 								$('<option/>', {
 									value: obj,
@@ -398,8 +397,17 @@
 						});
 						break;
 				}
+
 			});
 
+			$('[data-tab-name="topCountryMessages"]').on('shown.bs.tab', function (e) {
+				console.log(e);
+				$('#topCountryMessageSelect').change();
+			});
+
+			//////////////////
+			// Utils
+			//////////////////
 
 			function LoadMetrics(url, onSuccess) {
 				$.ajax({
@@ -415,9 +423,6 @@
 			}
 
 			function LoadMetricsWithData(url, params, onSuccess) {
-
-				console.log("Ajax Request w/Data: ", url, params);
-
 				$.ajax({
 					url: url,
 					dataType: 'json',
@@ -427,22 +432,17 @@
 
 						try {
 							jData = JSON.parse(data);
-							console.log("Received Data", jData);
 						} catch (e) {
 							console.log("No data to parse.");
 						}
 
 						if (onSuccess)
 							onSuccess(jData);
-
-						console.log("Finished with ajax call");
-
 					},
 					fail: function (xhr, ajaxOptions, thrownError) {
 						console.log("request failed", xhr, ajaxOptions, thrownError);
 					}
 				});
-
 			}
 
 			function CreateTable(parent, tableId, tableHeaders)

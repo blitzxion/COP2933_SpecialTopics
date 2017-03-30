@@ -23,9 +23,17 @@ namespace LogFileParser.Controllers
         {
 			// Prepare for Query Builder
 			ViewBag.FilterDefinition = GetDefaultFilterDefinition(typeof(LogRecord));
-			ViewBag.Model = AppDbContext.LogRecords.Take(100).ToList(); // Just display the first 100 records
+			ViewBag.Model = AppDbContext.LogRecords.Take(10).ToList();
 			return View();
         }
+
+		public ActionResult CountryMessages()
+		{
+			ViewBag.FilterDefinition = GetDefaultFilterDefinition(typeof(LogRecord));
+			ViewBag.Model = AppDbContext.LogRecords.Take(10).ToList();
+
+			return View();
+		}
 
 		[HttpPost]
 		public ActionResult TestQuery(FilteringRules filterRule)
@@ -34,25 +42,6 @@ namespace LogFileParser.Controllers
 
 			// Prepare for Query Builder, using Filter!
 			var query = AppDbContext.LogRecords.BuildQuery(filterRule.Rules);
-
-			// Get this out of the way first, just easier that way
-			// LIMIT
-			//if(filterRule.Limit.HasValue)
-			//	query = query.Take(filterRule.Limit.GetValueOrDefault(10)); // 10 to be safe
-
-			// Select (only if there are no group by fields)
-			//if(filterRule.SelectFields != null && filterRule.SelectFields.Any(x => !string.IsNullOrEmpty(x.Name)))
-			//{
-			//	if(filterRule.SelectFields.Any(x => !string.IsNullOrEmpty(x.Augment)))
-			//	{
-			//		// TODO: Figure this crap out...
-			//	} else
-			//		query = query.Select($"new ({string.Join(", ", filterRule.SelectFields.Select(x => x.Name))})");
-			//}
-
-			//var jsonResults = JsonConvert.SerializeObject(query, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
-			//results = JsonConvert.DeserializeObject<List<LogRecord>>(jsonResults);
-
 			var page = filterRule.Page.GetValueOrDefault(1);
 			var pageSize = filterRule.Limit.GetValueOrDefault(10);
 
@@ -71,6 +60,33 @@ namespace LogFileParser.Controllers
 			return SerializeForJson(objData);
 		}
 
+		public ActionResult MessagesPerCountryQuery(FilteringRules filterRule)
+		{
+			// Prepare for Query Builder, using Filter!
+			var query = AppDbContext.LogRecords
+				.BuildQuery(filterRule.Rules) // can provide times here, or country
+				.GroupBy(x => new { x.Country, x.MessageClass })
+				.Select(x => new { x.Key.Country, x.Key.MessageClass, Total = x.Count() });
+				
+			var page = filterRule.Page.GetValueOrDefault(1);
+			var pageSize = filterRule.Limit.GetValueOrDefault(10);
+
+			var model = query
+				.OrderBy(x => x.Total)
+				.ToPagedList(page, pageSize);
+
+			var objData = new
+			{
+				data = model,
+				CurrentPage = page,
+				PreviousPage = page - 1,
+				NextPage = page + 1,
+				LastPage = model.PageCount
+			};
+
+			return SerializeForJson(objData);
+		}
+		
 		// Utils
 
 		private string GetDefaultFilterDefinition(Type type)
