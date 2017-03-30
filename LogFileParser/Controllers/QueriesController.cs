@@ -35,6 +35,14 @@ namespace LogFileParser.Controllers
 			return View();
 		}
 
+		public ActionResult CountryMessagesGlobal()
+		{
+			ViewBag.FilterDefinition = GetDefaultFilterDefinition(typeof(LogRecord));
+			ViewBag.Model = AppDbContext.LogRecords.Take(10).ToList();
+
+			return View();
+		}
+
 		[HttpPost]
 		public ActionResult TestQuery(FilteringRules filterRule)
 		{

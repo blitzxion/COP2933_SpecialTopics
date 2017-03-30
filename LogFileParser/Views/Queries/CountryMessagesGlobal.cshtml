@@ -1,0 +1,150 @@
+﻿
+@{
+	ViewBag.Title = "CountryMessages";
+}
+
+<div class="row globalBackground">
+	<div class="col-md-12">
+		<div class="text-center">
+			<canvas id='rotatingGlobe' style='cursor: move;'></canvas>
+			@*<div class="world-map" style="height:800px;"></div>*@
+		</div>
+	</div>
+</div>
+
+@section Styles {
+	@Styles.Render("~/Content/bs-datetimepicker")
+	@Styles.Render("~/Content/plugins/queryBuilder")
+	<style>
+		.globalBackground { 
+			background-image: url("/Content/sky.png")
+		}
+	</style>
+}
+
+@section Scripts {
+	@Scripts.Render("~/bundles/bs-datetimepicker")
+	@Scripts.Render("~/plugins/queryBuilder")
+
+	<script type='text/javascript' src='http://d3js.org/d3.v3.min.js'></script>
+		<script type='text/javascript' src='http://d3js.org/topojson.v1.min.js'></script>
+
+	@Scripts.Render("~/bundles/d3")
+	@Scripts.Render("~/bundles/planetary")
+	@*@Scripts.Render("~/bundles/jvectormaps")*@
+
+	<script>
+		(function () {
+
+			var canvas = document.getElementById('rotatingGlobe');
+
+			var globe = planetaryjs.planet();
+
+			//////////////////////////////
+			// Loading Globe Plugins
+			//////////////////////////////
+
+			globe.loadPlugin(autocenter({ extraHeight: -120 }));
+			globe.loadPlugin(autoscale({ extraHeight: -120 }));
+
+			globe.loadPlugin(planetaryjs.plugins.earth({
+				topojson: { file: '/content/world-110m.json' },
+				oceans: { fill: '#001320' },
+				land: { fill: '#06304e' },
+				borders: { stroke: '#001320' }
+			}));
+
+			//globe.loadPlugin(lakes({ fill: '#000080' }));
+			globe.loadPlugin(planetaryjs.plugins.zoom({ scaleExtent: [50, 5000] }));
+
+			globe.loadPlugin(planetaryjs.plugins.drag({
+				onDragStart: function () {
+					this.plugins.autorotate.pause();
+				},
+				onDragEnd: function () {
+					this.plugins.autorotate.resume();
+				}
+			}));
+
+			globe.loadPlugin(autorotate(5));
+
+			//////////////////////////////
+			// Draw the Globe
+			//////////////////////////////
+
+			globe.projection.rotate([100, -10, 0]);
+			globe.draw(canvas);
+
+			//////////////////////////////
+			// Custom Globe Plugins
+			//////////////////////////////
+
+			function autoscale(options) {
+				options = options || {};
+				return function (planet) {
+					planet.onInit(function () {
+						var width = window.innerWidth + (options.extraWidth || 0);
+						var height = window.innerHeight + (options.extraHeight || 0);
+						planet.projection.scale(Math.min(width, height) / 2);
+					});
+				};
+			};
+
+			function autocenter(options) {
+				options = options || {};
+				var needsCentering = false;
+				var globe = null;
+
+				var resize = function () {
+					var width = window.innerWidth + (options.extraWidth || 0);
+					var height = window.innerHeight + (options.extraHeight || 0);
+					globe.canvas.width = width;
+					globe.canvas.height = height;
+					globe.projection.translate([width / 2, height / 2]);
+				};
+
+				return function (planet) {
+					globe = planet;
+					planet.onInit(function () {
+						needsCentering = true;
+						d3.select(window).on('resize', function () {
+							needsCentering = true;
+						});
+					});
+
+					planet.onDraw(function () {
+						if (needsCentering) { resize(); needsCentering = false; }
+					});
+				};
+			};
+
+			function autorotate(degPerSec) {
+
+				return function (planet) {
+					var lastTick = null;
+					var paused = false;
+					planet.plugins.autorotate = {
+						pause: function () { paused = true; },
+						resume: function () { paused = false; }
+					};
+
+					planet.onDraw(function () {
+						if (paused || !lastTick) {
+							lastTick = new Date();
+						} else {
+							var now = new Date();
+							var delta = now - lastTick;
+							var rotation = planet.projection.rotate();
+							rotation[0] += degPerSec * delta / 1000;
+							if (rotation[0] >= 180) rotation[0] -= 360;
+							planet.projection.rotate(rotation);
+							lastTick = now;
+						}
+					});
+				};
+			};
+
+		})();
+	</script>
+
+}

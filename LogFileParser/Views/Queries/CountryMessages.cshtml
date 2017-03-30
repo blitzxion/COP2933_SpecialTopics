@@ -7,7 +7,7 @@
 	<div class="col-md-12">
 		<div class="text-center">
 			@*<canvas id='rotatingGlobe' style='cursor: move;'></canvas>*@
-			<div class="world-map"></div>
+			<div class="world-map" style="height:800px;"></div>
 		</div>
 	</div>
 </div>
@@ -15,7 +15,7 @@
 @section Styles {
 	@Styles.Render("~/Content/bs-datetimepicker")
 	@Styles.Render("~/Content/plugins/queryBuilder")
-	@Styles.Render("~/Content/jvectormaps");
+	@Styles.Render("~/Content/jvectormaps")
 }
 
 @section Scripts {
@@ -36,9 +36,25 @@
 
 			LoadMetricsWithData(tCMSUrl, { limit : 250000 }, function (data) {
 
-				//console.log(data.data);
+				var countryData = {};
+				$.each(data.data, function (i, item) {
 
-				LoadMap(data.data);
+					var country = item.country;
+					var total = item.total;
+
+					if (!isNaN(country)) return;
+
+					if (!(country in countryData)) { 
+						countryData[country] = 0;
+					}
+					
+					countryData[country] += total;
+
+				});
+
+				console.log(countryData);
+
+				LoadMap(countryData);
 			});
 
 			function LoadMap(mapData) {
@@ -52,7 +68,7 @@
 						}]
 					},
 					onRegionTipShow: function (e, el, code) {
-						el.html(el.html() + ' (Messages - ' + mapData[code] + ')');
+						el.html(el.html() + '-' + code + ' (Messages - ' + mapData[code] + ')');
 					}
 				});
 			}

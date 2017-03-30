@@ -94,7 +94,8 @@ namespace LogFileParser
 
 			// jVectorMaps
 			bundles.Add(new ScriptBundle("~/bundles/jvectormaps").Include(
-				"~/Scripts/jquery-jvectormap.min.js"));
+				"~/Scripts/jquery-jvectormap.min.js",
+				"~/Scripts/jVectorMaps/world-ISO-A3/jquery-jvectormap-world-mill-en-US.js"));
 
 			bundles.Add(new StyleBundle("~/Content/jvectormaps").Include(
 				"~/Content/jquery-jvectormap.css"));

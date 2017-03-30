@@ -418,6 +418,7 @@
     <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-en-US.min.js.map" />
     <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-de-DE.min.js.map" />
     <Content Include="Scripts\jVectorMaps\world-ISO-A2\jquery-jvectormap-world-mill-en-US.min.js.map" />
+    <Content Include="Views\Queries\CountryMessagesGlobal.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
