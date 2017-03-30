@@ -14,14 +14,43 @@
 				<div class="panel-body">
 
 					<!-- SELECT BUILDER -->
+
 					@*<div class="row">
-						<div class="col-md-6">
-							<h5>Selected Fields</h5>
-							<ol class="sortaable selectedFields"></ol>
-						</div>
-						<div class="col-md-6">
-							<h5>Available Fields</h5>
-							<ol class="sortaable availableFields"></ol>
+						<div class="col-md-12">
+
+							<div class="alert alert-warning">
+
+								<table class="table selectFieldsTable">
+									<thead></thead>
+									<tbody>
+										<tr class="field_entry">
+											<td>
+												<select name="select-builder_fields[]" class="form-control selectedField">
+													<option value="">*</option>
+												</select>
+											</td>
+											<td>
+												<select name="select-builder_augmenters[]" class="form-control selectedAug">
+													<option value="">SELECT</option>
+													<option value="sum">SUM</option>
+													<option value="count">COUNT</option>
+													<option value="average">AVERAGE</option>
+												</select>
+											</td>
+											<td>
+												<div class="text-right">
+													<div class="btn-group">
+														<button class="btn btn-success btn-xs addField"><span class="glyphicon glyphicon-plus"></span> Add field</button>
+														<button class="btn btn-danger btn-xs removeField"><span class="glyphicon glyphicon-remove"></span> Delete</button>
+													</div>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+
+							</div>
+
 						</div>
 					</div>*@
 
@@ -95,6 +124,16 @@
 @section Styles {
 	@Styles.Render("~/Content/bs-datetimepicker")
 	@Styles.Render("~/Content/plugins/queryBuilder")
+
+	<style>
+		.removeField {
+			display: none;
+		}
+		.field_entry:not(:first-child) .removeField {
+			display: block;
+		}
+	</style>
+
 }
 
 @section Scripts {
@@ -142,23 +181,20 @@
 				try {
 
 					var rules = {
-						Select : [],
-						GroupBy: [],
+						SelectFields : [],
 						Limit : $('#limit').val(),
 						Rules : { }
 					};
 
-					// Select and Group Fields
-					var selectFields = $('.selectedFields').sortable('serialize').get()[0];
-
-					console.log(selectFields);
-
-					for(var i in selectFields) {
-						var field = selectFields[i].field;
-						rules.Select.push(field);
-						if(selectFields[i].groupSkip == false)
-							rules.GroupBy.push(field);
-					}
+					// Select Fields
+					$('.field_entry').each(function(){ 
+						var selectedField = $(this).find('.selectedField').val();
+						//var selectedAug = $(this).find('.selectedAug').val();
+						rules.SelectFields.push({
+							Name : selectedField,
+							//Augment : selectedAug
+						});
+					});
 
 					var res =  qbElem.queryBuilder('getRules');
 					convertArraysToCommaDelimited(res);
@@ -183,13 +219,13 @@
 				$.each(data, function(index, obj) {
 					var tr = $('<tr/>');
 
-					$('<td/>').html(obj.timestampUTC).appendTo(tr);
-					$('<td/>').html(obj.messageClass).appendTo(tr);
-					$('<td/>').html(obj.sendingIP).appendTo(tr);
+					$('<td/>').html(obj.timestampUTC || "").appendTo(tr);
+					$('<td/>').html(obj.messageClass || "").appendTo(tr);
+					$('<td/>').html(obj.sendingIP || "").appendTo(tr);
 
-					$('<td/>').html(obj.receivingIP).appendTo(tr);
-					$('<td/>').html(obj.country).appendTo(tr);
-					$('<td/>').html(obj.failedTestCollection.join()).appendTo(tr);
+					$('<td/>').html(obj.receivingIP || "").appendTo(tr);
+					$('<td/>').html(obj.country || "").appendTo(tr);
+					$('<td/>').html((obj.failedTestCollection != null) ? obj.failedTestCollection.join() : "").appendTo(tr);
 
 					tr.appendTo(tBody);
 				});
@@ -201,7 +237,7 @@
 				var config = getRules();
 
 				// SELECT
-				sqlStm += ((config.Select.length <= 0) ? "*" : config.Select.join(", ")) + "\n";
+				sqlStm += ((config.SelectFields.length <= 0) ? "*" : config.SelectFields.map(function(item) { return item.Name; }).join(", ")) + "\n";
 
 				// FROM
 				sqlStm += "FROM table \n"
@@ -210,8 +246,7 @@
 				sqlStm += "WHERE " + qbElem.queryBuilder("getSQL", false, true).sql;
 
 				// GROUP BY
-				if(config.GroupBy.length > 0)
-					sqlStm += "GROUP BY " + config.GroupBy.join(", ") + "\n";
+				//if(config.GroupBy.length > 0) sqlStm += "GROUP BY " + config.GroupBy.join(", ") + "\n";
 
 				// LIMIT
 				sqlStm += "LIMIT " + config.Limit;
@@ -244,22 +279,21 @@
 			{
 				// qbFilter will have the available fields the user can choose from
 				$.each(qbFilter, function(i, item){
-					$('<li/>', { 
+					$('<option/>', {
 						'data-field' : item.field,
-						'data-group-skip' : false
+						'text' : item.field
 					})
-					.text(item.field)
-					.appendTo($('.availableFields'));
+					.appendTo($('.selectedField'));
 				});
 
-				// I'm just limiting this...
-				$('<li/>', { 
-					'data-field' : 'COUNT(*)', 
-					'data-group-skip' : true 
-				})
-				.text("COUNT()")
-				.appendTo($('.availableFields'));
+			}
 
+			function getSelectedFields() {
+				var selectedFields = [];
+				$('.field_entry').each(function(){ 
+					selectedFields.push($(this).find('.selectedField').val());
+				});
+				return selectedFields;
 			}
 
 			// Render the Query Builder
@@ -284,9 +318,16 @@
 
 
 			setSelectFields();
-			var sortOptions = { group: 'table-fields' };
-			$('.availableFields').sortable(sortOptions);
-			$('.selectedFields').sortable(sortOptions);
+			$('.addField').on('click', function() { 
+				var parent = $(this).parents("tr.field_entry");
+				var clone = parent.clone(true);
+				$('table.selectFieldsTable tbody').append(clone);
+				parent.after(clone);
+			});
+			$('.removeField').on('click', function() {
+				if($('table.selectFieldsTable tbody tr').length == 1) return; // Don't delete the last remaining row.
+				$(this).parents("tr.field_entry").remove();
+			});
 
 			// Send off request to filter data, should just return all data at this point????
 			filterData();

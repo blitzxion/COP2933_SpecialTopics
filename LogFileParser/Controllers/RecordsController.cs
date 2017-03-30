@@ -114,7 +114,7 @@ namespace LogFileParser.Controllers
 					})
 					.OrderBy(x => x.Timestamp);
 
-				
+
 				foreach (var message in messages)
 				{
 					if (!dataset.Keys.Contains(message.MessageClass))
@@ -188,6 +188,59 @@ namespace LogFileParser.Controllers
 
 			return SerializeForJson(data);
 		}
+
+		public ActionResult GetTopSendingCountriesOfMessageClass(string msgClass)
+		{
+			if (string.IsNullOrEmpty(msgClass))
+				return null;
+
+			msgClass = msgClass.ToUpper();
+
+			dynamic data;
+
+			using (var context = AppDbContext)
+			{
+				data = context.LogRecords
+					.Where(x => x.MessageClass.ToUpper().Contains(msgClass))
+					.GroupBy(x => new { x.MessageClass, x.Country })
+					.Select(x => new { x.Key.MessageClass, x.Key.Country, Count = x.Count() })
+					.OrderByDescending(x => x.Count)
+					.Take(10)
+					.ToList();
+			}
+
+			return SerializeForJson(data);
+		}
+
+		public ActionResult GetIpAddressesOverAppearance(string msgClass, double percentage)
+		{
+			if (string.IsNullOrEmpty(msgClass))
+				return null;
+
+			msgClass = msgClass.ToUpper();
+
+			dynamic data = null;
+
+			using (var context = AppDbContext)
+			{
+
+
+
+			}
+
+			return SerializeForJson(data);
+		}
+
+		public ActionResult GetMessageClasses()
+		{
+			List<string> data = new List<string>();
+
+			using (var context = AppDbContext)
+				data = context.LogRecords.Select(x => x.MessageClass).Distinct().ToList();
+
+			return SerializeForJson(data);
+		}
+
 
 	}
 }

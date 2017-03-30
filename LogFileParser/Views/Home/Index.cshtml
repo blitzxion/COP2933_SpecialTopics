@@ -20,7 +20,7 @@
 		<div class="col-md-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3>MessageData</h3>
+					<h3>All Message Data</h3>
 				</div>
 				<div class="panel-body" data-chart="messageData">
 					@Html.Partial("_Loading")
@@ -31,7 +31,7 @@
 		<div class="col-md-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3>MessagePercentageData</h3>
+					<h3>All Message Percentage Data</h3>
 				</div>
 				<div class="panel-body" data-chart="messageDataPerc">
 					@Html.Partial("_Loading")
@@ -42,7 +42,7 @@
 		<div class="col-md-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3>MessageClassData</h3>
+					<h3>All Message Class Data</h3>
 				</div>
 				<div class="panel-body" data-chart="messageClassData">
 					@Html.Partial("_Loading")
@@ -53,23 +53,32 @@
 		<div class="col-md-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3>SendingIPData</h3>
+					<h3>Top Sending IP Addresses</h3>
 				</div>
-				<div class="panel-body" data-table="topSendingIPs">
-					@Html.Partial("_Loading")
-				</div>
+				<div class="panel-body" data-table="topSendingIPs">@Html.Partial("_Loading")</div>
 			</div>
 		</div>
 
 		<div class="col-md-12">
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h3>TopCountriesData</h3>
+			<div class="tabs-container">
+
+				<ul class="nav nav-tabs">
+					<li role="presentation" class="active"><a href="#topCountries" aria-controls="topCountries" role="tab" data-toggle="tab">Top 10 Countries</a></li>
+					<li role="presentation"><a href="#topCountryMessages" aria-controls="topCountries" role="tab" data-toggle="tab">of Message Type</a></li>
+				</ul>
+
+				<div class="tab-content">
+					<div role="tabpanel" class="tab-pane active" id="topCountries">
+						<div data-chart="topCountries">@Html.Partial("_Loading")</div>
+					</div>
+					<div role="tabpanel" class="tab-pane" id="topCountryMessages">
+						<div><select id="topCountryMessageSelect" data-ajax-load="messageClasses"></select></div>
+						<div data-chart="topCountryMessages">@Html.Partial("_Loading")</div>
+					</div>
 				</div>
-				<div class="panel-body" data-chart="topCountries">
-					@Html.Partial("_Loading")
-				</div>
+
 			</div>
+
 		</div>
 
 	</div>
@@ -81,6 +90,7 @@
 }
 
 @section Scripts {
+	@Scripts.Render("~/plugins/chartJs")
 	@Scripts.Render("~/plugins/jqcanvasjs")
 	@Scripts.Render("~/plugins/dataTables")
 
@@ -160,8 +170,8 @@
 				var dataPoints = [];
 				$.each(data, function (index, obj) {
 					dataPoints.push({
-						y: obj.Count,
-						indexLabel: obj.MessageClass
+						y: obj.count,
+						indexLabel: obj.messageClass
 					});
 				});
 
@@ -192,12 +202,11 @@
 				$.each(data, function (index, obj) {
 
 					var tRow = $('<tr/>')
-						.append($('<td/>').text(obj.SendingIP))
-						.append($('<td/>').text(obj.Count));
+						.append($('<td/>').text(obj.sendingIP))
+						.append($('<td/>').text(obj.count));
 
 					tBody.append(tRow);
 				});
-
 
 				table.append(tHead);
 				table.append(tBody);
@@ -223,8 +232,8 @@
 				var dataPoints = [];
 				$.each(data, function (index, obj) {
 					dataPoints.push({
-						y: obj.Count,
-						label: obj.Country
+						y: obj.count,
+						label: obj.country
 					});
 				});
 
@@ -239,7 +248,61 @@
 
 			});
 
+			// Events and Element Events
+
+			$('#topCountryMessageSelect').on('change', function () {
+
+				var msgClass = $(this).val();
+
+				LoadMetricsWithData("@Url.Action("GetTopSendingCountriesOfMessageClass", "Records")", { msgClass: msgClass }, function (data) {
+
+					var chartDiv = $('<div/>')
+					.attr("id", "topCountryMessageType")
+					.css({
+						width: '100%',
+						height: '350px'
+					});
+
+					$('[data-chart="topCountryMessages"]').empty().append(chartDiv);
+
+					var dataPoints = [];
+					$.each(data, function (index, obj) {
+						dataPoints.push({
+							y: obj.count,
+							label: obj.country
+						});
+					});
+
+					var chartData = {
+						data: [{
+							type: "column",
+							dataPoints: dataPoints
+						}],
+					};
+
+					chartDiv.CanvasJSChart(chartData);
+
+				});
+
+			});
+
+
 			// Utils
+
+			$('select[data-ajax-load]').each(function () {
+				var elem = $(this);
+				var loadWhat = elem.data('ajax-load');
+				switch (loadWhat) {
+					case "messageClasses":
+						LoadMetrics("@Url.Action("GetMessageClasses", "Records")", function (data) {
+							$.each(data, function (i, obj) {
+								$('<option/>').text(obj).appendTo(elem);
+							});
+						});
+						break;
+				}
+			});
+
 
 			function LoadMetrics(url, onSuccess) {
 				$.ajax({
@@ -254,36 +317,18 @@
 				});
 			}
 
-			function SyncHandler(e) {
+			function LoadMetricsWithData(url, params, onSuccess) {
+				$.ajax({
+					url: url,
+					dataType: 'json',
+					data: params,
+					success: function (data) {
+						var jData = JSON.parse(data);
 
-				for (var i = 0; i < charts.length; i++) {
-					var chart = charts[i];
-
-					//if (!chart.options.axisX) chart.options.axisX = {};
-					//if (!chart.options.axisY) chart.options.axisY = {};
-
-					if (e.trigger === "reset") {
-
-						chart.options.axisX.viewportMinimum = chart.options.axisX.viewportMaximum = null;
-						chart.options.axisY.viewportMinimum = chart.options.axisY.viewportMaximum = null;
-
-						chart.render();
-
-					} else if (chart !== e.chart) {
-
-						console.log(e, chart);
-
-						//chart.options.axisX.viewportMinimum = e.axisX.viewportMinimum;
-						//chart.options.axisX.viewportMaximum = e.axisX.viewportMaximum;
-						//chart.options.axisY.viewportMinimum = e.axisY.viewportMinimum;
-						//chart.options.axisY.viewportMaximum = e.axisY.viewportMaximum;
-
-						chart.render();
-
+						if (onSuccess)
+							onSuccess(jData);
 					}
-
-				}
-
+				});
 			}
 
 		})();

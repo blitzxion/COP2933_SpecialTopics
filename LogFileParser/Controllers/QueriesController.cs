@@ -31,27 +31,26 @@ namespace LogFileParser.Controllers
 		{
 			// Prepare for Query Builder, using Filter!
 			List<LogRecord> results = new List<LogRecord>();
-			var query = AppDbContext.LogRecords.BuildQuery(filterRule.Rules);
+			IQueryable query = AppDbContext.LogRecords.BuildQuery(filterRule.Rules);
 
 			// Get this out of the way first, just easier that way
 			// LIMIT
 			query = query.Take(filterRule.Limit);
 
-			// GROUP BY, RABBLE
-			if(filterRule.GroupBy != null && filterRule.GroupBy.Any())
+			// Select (only if there are no group by fields)
+			if(filterRule.SelectFields != null && filterRule.SelectFields.Any(x => !string.IsNullOrEmpty(x.Name)))
 			{
-				// Do something with the properties
-				query = query.GroupBy(filterRule.GroupBy).SelectMany(x => x);
-				//var selQuery = query.Select("new (" + string.Join(", ", filterRule.Select) + ")");
-				
-				results = query.ToList();
-			}
-			else
-			{
-				// If there wasn't a group, flatten out the query into a list
-				results = query.ToList();
+				if(filterRule.SelectFields.Any(x => !string.IsNullOrEmpty(x.Augment)))
+				{
+					// TODO: Figure this crap out...
+				} else
+					query = query.Select($"new ({string.Join(", ", filterRule.SelectFields.Select(x => x.Name))})");
 			}
 
+			
+
+			var jsonResults = JsonConvert.SerializeObject(query, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+			results = JsonConvert.DeserializeObject<List<LogRecord>>(jsonResults);
 
 			return SerializeForJson(results);
 		}
@@ -73,18 +72,22 @@ namespace LogFileParser.Controllers
 
 		public class FilteringRules
 		{
-			public List<string> Select { get; set; }
-			public List<string> GroupBy { get; set; }
+			public List<FilterField> SelectFields { get; set; }
 			public int Limit { get; set; }
 			public FilterRule Rules { get; set; }
 
 			public FilteringRules()
 			{
-				GroupBy = new List<string>();
-				Select = new List<string>();
+				SelectFields = new List<FilterField>();
 				Limit = 100;
 			}
 
+		}
+
+		public class FilterField
+		{
+			public string Name { get; set; }
+			public string Augment { get; set; }
 		}
 
 	}

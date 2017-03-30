@@ -150,8 +150,8 @@
 				var dataPoints = [];
 				$.each(data, function (index, obj) {
 					dataPoints.push({
-						y: obj.Count,
-						indexLabel: obj.MessageClass
+						y: obj.count,
+						indexLabel: obj.messageClass
 					});
 				});
 
@@ -182,12 +182,11 @@
 				$.each(data, function (index, obj) {
 
 					var tRow = $('<tr/>')
-						.append($('<td/>').text(obj.SendingIP))
-						.append($('<td/>').text(obj.Count));
+						.append($('<td/>').text(obj.sendingIP))
+						.append($('<td/>').text(obj.count));
 
 					tBody.append(tRow);
 				});
-
 
 				table.append(tHead);
 				table.append(tBody);
@@ -213,8 +212,8 @@
 				var dataPoints = [];
 				$.each(data, function (index, obj) {
 					dataPoints.push({
-						y: obj.Count,
-						label: obj.Country
+						y: obj.count,
+						label: obj.country
 					});
 				});
 

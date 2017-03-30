@@ -447,6 +447,7 @@ namespace LogFileParser
 			return source.GroupBy(GetGroupKey<T>(properties.ToArray()));
 		}
 
+
 		private static Expression<Func<T, string>> GetGroupKey<T>(params string[] properties)
 		{
 			if (!properties.Any())
