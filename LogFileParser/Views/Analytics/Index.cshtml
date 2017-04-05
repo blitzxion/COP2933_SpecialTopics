@@ -1,0 +1,359 @@
+﻿
+<div class="wrapper wrapper-content">
+
+	<div class="row">
+
+		<div class="col-md-12">
+
+			<!-- Some Chart that is based off the below data query -->
+			@Html.Partial("_Loading")
+
+		</div>
+
+		<div class="col-md-12">
+
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Data Table</h3>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label class="control-label">Start Date\Time</label>
+								<div class="input-group date" id="start_date" data-input="datetimepicker">
+									<input type="text" class="form-control" placeholder="Start date/time" />
+									<span class="input-group-addon">
+										<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label class="control-label">End Date\Time</label>
+								<div class="input-group date" id="end_date" data-input="datetimepicker">
+									<input type="text" class="form-control" placeholder="End date/time" />
+									<span class="input-group-addon">
+										<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-12 filterTagOuput"></div> 
+					</div>
+				</div>
+
+				<div class="table-responsive">
+					<table class="table" data-url="@Url.Action("GetRecords","Records")">
+						<thead>
+							<tr>
+								<th data-field="timestampUTC" data-can-filter="false" data-date-format="DD/MM/YYYY h:mm:ss A">Date\Time UTC</th>
+								<th data-field="messageClass" data-can-filter="true" >Message Class</th>
+								<th data-field="sendingIP" data-can-filter="true">Sending IP</th>
+								<th data-field="receivingIP" data-can-filter="true">Receiving IP</th>
+								<th data-field="country" data-can-filter="true">Country</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				</div>
+
+				<div class="panel-footer">
+					<div class="row">
+						<div class="col-md-4">
+							<div class="text-left">
+								<button data-nav="first" class="btn btn-warning">First Page</button>
+								<button data-nav="previous" class="btn btn-primary">Previous Page</button>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="text-center" data-nav="metadata"></div>
+						</div>
+						<div class="col-md-4">
+							<div class="text-right">
+								<button data-nav="next" class="btn btn-primary">Next Page</button>
+								<button data-nav="last" class="btn btn-warning">Last Page</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+</div>
+
+
+@section Styles {
+	@Styles.Render("~/Content/bs-datetimepicker")
+}
+
+@section Scripts {
+	@Scripts.Render("~/bundles/bs-datetimepicker")
+
+	<script>
+		(function () {
+
+			$('[data-input="datetimepicker"]').datetimepicker({
+				sideBySide: true,
+				useCurrent: false
+			});
+			$("#start_date").on("dp.change", function (e) {
+				$('#end_date').data("DateTimePicker").minDate(e.date);
+			});
+			$("#end_date").on("dp.change", function (e) {
+				$('#start_date').data("DateTimePicker").maxDate(e.date);
+			});
+
+
+			var CustomAjaxTable = function (_options) {
+
+				var self = this;
+
+				var defaults = {
+					tableId: null,
+					url: null,
+					fields: [],
+					filterTagOutput:null,
+					nav: {
+						first: null,
+						last: null,
+						previous: null,
+						next: null,
+						metadata: null,
+					}
+				};
+				var options = $.extend(defaults, {}, _options);
+
+				this.Table = $(options.tableId);
+				this.TableHeaders = self.Table.find('[data-field]');
+				this.TableBody = self.Table.find('tbody');
+
+				// Filled when data is collected again
+				this.Metadata = {};
+				this.Data = [];
+				this.Rules = {
+					page: 1,
+					size: 25,
+					filter: null
+				};
+
+				this.GetData = function (page, size) {
+					page = page || self.Rules.page;
+					size = size || self.Rules.size;
+
+					var parms = { page: page, size: size };
+					if (self.Rules.filter)
+						parms['filter'] = self.Rules.filter;
+
+					LoadAjax(options.url, parms, function (data) {
+
+						self.Data = data.data;
+						self.Metadata = data.metadata;
+						self.Rules = data.filter; // Will have page, size and filter
+
+						if (self.Rules.filter == null)
+							self.Rules.filter = {};
+
+						self.UpdateTable(self.Data);
+						self.UpdateNavigation();
+						self.UpdateFilterTags();
+					});
+				};
+
+				this.Setup = function () {
+
+					// Navigation
+
+					if (options.nav.first) {
+						$(options.nav.first).on('click', function (e) {
+							e.preventDefault();
+							console.log("First Page", 1);
+							self.GetData(1);
+						})
+					}
+
+					if (options.nav.last) {
+						$(options.nav.last).on('click', function (e) {
+							e.preventDefault();
+							console.log("Last Page", self.Metadata.pageCount);
+							self.GetData(self.Metadata.pageCount);
+						})
+					}
+
+					if (options.nav.next) {
+						$(options.nav.next).on('click', function (e) {
+							e.preventDefault();
+							console.log("Next Page", self.Metadata.pageNumber + 1);
+							self.GetData(self.Metadata.pageNumber + 1);
+						})
+					}
+
+					if (options.nav.previous) {
+						$(options.nav.previous).on('click', function (e) {
+							e.preventDefault();
+							console.log("Previous Page", self.Metadata.pageNumber - 1);
+							self.GetData(self.Metadata.pageNumber - 1);
+						})
+					}
+
+					// Field-level Filtering
+
+					self.Table.on('click', 'a[data-cat-filter]', function (e) {
+						e.preventDefault();
+
+						var filterField = $(this).data('cat-filter');
+						var filterValue = $(this).text();
+
+						self.Rules.filter[filterField] = filterValue;
+
+						// Filtering will go back to page one.
+						self.GetData(1, self.Size);
+					});
+
+					if ($(options.filterTagOutput).length > 0) {
+						$(options.filterTagOutput).on('click', 'a[data-tag-filter]', function (e) {
+							e.preventDefault();
+							var filter = $(this).data('tag-filter');
+							delete self.Rules.filter[filter]; // lol filter filter filter
+							$(this).parent().remove();
+							self.GetData(1, self.Size);
+						});
+					}
+
+				};
+
+				this.UpdateTable = function (data) {
+
+					self.TableBody.empty();
+
+					$.each(data, function (i, item) {
+
+						var tr = $("<tr/>");
+
+						self.TableHeaders.each(function () {
+							
+							var fieldName = $(this).data('field');
+							var fieldValue = item[fieldName];
+							var canFilter = $(this).data('can-filter');
+							var dateFormat = $(this).data('date-format');
+
+							if (dateFormat) fieldValue = moment(fieldValue).format(dateFormat);
+
+							var newElem = canFilter ? $('<a/>', { 'data-cat-filter': fieldName }).text(fieldValue) : fieldValue;
+
+							tr.append($("<td/>").append(newElem));
+
+						});
+
+						self.TableBody.append(tr);
+
+					});
+
+				};
+
+				this.UpdateNavigation = function () {
+
+					if (options.nav.first) $(options.nav.first).toggle(!self.Metadata.isFirstPage);
+
+					if (options.nav.last) $(options.nav.last).toggle(!self.Metadata.isLastPage);
+
+					if (options.nav.next) $(options.nav.next).toggle(self.Metadata.hasNextPage);
+
+					if (options.nav.previous) $(options.nav.previous).toggle(self.Metadata.hasPreviousPage);
+
+					if (options.nav.metadata) {
+
+						var ms = function (txt) { return $("<span/>").text(txt); };
+
+						var page = ms(self.Metadata.pageNumber);
+						var ofPage = ms(self.Metadata.pageCount);
+						var showing = ms(self.Metadata.firstItemOnPage);
+						var to = ms(self.Metadata.lastItemOnPage);
+						var of = ms(self.Metadata.totalItemCount);
+
+						$(options.nav.metadata).empty();
+
+						$(options.nav.metadata)
+							.append("Page ").append(page)
+							.append(" of ").append(ofPage)
+							.append(" | Showing ").append(showing)
+							.append(" - ").append(to)
+							.append(" of ").append(of).append(" records");
+					}
+
+				};
+
+				this.UpdateFilterTags = function () {
+
+					if (!options.filterTagOutput) return;
+
+					$(options.filterTagOutput).empty();
+
+					$.each(self.Rules.filter, function (i, filter) {
+
+						// <span class="tag label label-primary">
+						//	<span>MessageClass</span>: <a href="#"><i class="glyphicon glyphicon-remove-sign glyphicon-white"></i></a>
+						// </span>
+
+						var tagHtml = '<span class="tag label label-primary"><span data-tag="name"></span> <a href="#"><i class="glyphicon glyphicon-remove-sign glyphicon-white"></i></a></span>';
+						var tag = $(tagHtml)
+							.find("[data-tag='name']").text(i + ": " + filter).end()
+							.find("a").attr("data-tag-filter", i).end();
+
+						$(options.filterTagOutput).append(tag);
+
+					});
+
+				};
+
+				// Construct
+				self.Setup();
+
+				self.GetData(1, 25);
+				self.UpdateNavigation();
+
+			};
+
+			var table = $('table[data-url]');
+
+			var cat = new CustomAjaxTable({
+				tableId: table,
+				url: table.data('url'),
+				filterTagOutput: ".filterTagOuput",
+				nav: {
+					first: $('[data-nav="first"]'),
+					last: $('[data-nav="last"]'),
+					previous: $('[data-nav="previous"]'),
+					next: $('[data-nav="next"]'),
+					metadata: $('[data-nav="metadata"]')
+				}
+			});
+
+			// Utils
+			function LoadAjax(url, data, callback) {
+				$.ajax({
+					url: url,
+					dataType: 'json',
+					data: data,
+					success: function (data) {
+						if (callback)
+							callback(JSON.parse(data));
+					},
+					error: function (xhr, options, error) {
+						console.log("request failed", xhr, options, error);
+					}
+				});
+			}
+
+
+		})();
+
+
+	</script>
+}

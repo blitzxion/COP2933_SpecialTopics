@@ -219,6 +219,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\StartUp.cs" />
+    <Compile Include="Controllers\AnalyticsController.cs" />
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\QueriesController.cs" />
@@ -226,6 +227,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\Attributes.cs" />
     <Compile Include="Helpers\Ensure.cs" />
     <Compile Include="Helpers\EntityPerformance.cs" />
     <Compile Include="Helpers\Extensions.cs" />
@@ -419,6 +421,7 @@
     <Content Include="Scripts\jVectorMaps\world-ISO-A3\jquery-jvectormap-world-mill-de-DE.min.js.map" />
     <Content Include="Scripts\jVectorMaps\world-ISO-A2\jquery-jvectormap-world-mill-en-US.min.js.map" />
     <Content Include="Views\Queries\CountryMessagesGlobal.cshtml" />
+    <Content Include="Views\Analytics\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

@@ -16,6 +16,7 @@ using LogFileParser.Models.Helpers;
 using LogFileParser.ViewModels;
 using X.PagedList;
 using Newtonsoft.Json;
+using System.Linq.Dynamic;
 
 namespace LogFileParser.Controllers
 {
@@ -89,6 +90,50 @@ namespace LogFileParser.Controllers
 
 			return Json(new { status = "complete", canDelete = true, path = LogFilePath }, JsonRequestBehavior.AllowGet);
 		}
+
+
+		// Ajax/JSON Queries
+
+		//[JsonFilter(Parameter = "filter", JsonDataType = typeof(RecordFilter))]
+		public ActionResult GetRecords(RecordFilter rules)
+		{
+			IPagedList<LogRecord> model = null;
+
+			//var filter = JsonConvert.DeserializeObject<RecordFilter>(filterJson ?? "") ?? new RecordFilter();
+
+			using (var context = AppDbContext)
+			{
+				var prepModel = context.LogRecords
+					.Include(x => x.FailedTests);
+
+				if (rules.filter != null && rules.filter.Any())
+				{
+					var filter = string.Join(" AND ", rules.filter.Select(x => $"{x.Key} = \"{x.Value}\""));
+					prepModel = prepModel.Where(filter);
+				}
+
+				model = prepModel
+					.OrderBy(x => x.TimestampUTC)
+					.ToPagedList(rules.page, rules.size);
+			}
+
+			return SerializeForJson(new {
+				data = model.ToList(),
+				metadata = model.GetMetaData(),
+				filter = rules
+			});
+		}
+
+		// Helper Classes (because Project, that's why)
+		public class RecordFilter
+		{
+			public int page { get; set; } = 1;
+			public int size { get; set; } = 25;
+			public Dictionary<string, string> filter { get; set; }
+		}
+
+
+		// Old Ajax Queries
 
 		public ActionResult GetMessageMetrics()
 		{
