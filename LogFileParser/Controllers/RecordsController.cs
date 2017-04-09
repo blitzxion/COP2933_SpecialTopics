@@ -17,6 +17,7 @@ using LogFileParser.ViewModels;
 using X.PagedList;
 using Newtonsoft.Json;
 using System.Linq.Dynamic;
+using System.Dynamic;
 
 namespace LogFileParser.Controllers
 {
@@ -95,32 +96,107 @@ namespace LogFileParser.Controllers
 		// Ajax/JSON Queries
 
 		//[JsonFilter(Parameter = "filter", JsonDataType = typeof(RecordFilter))]
-		public ActionResult GetRecords(RecordFilter rules)
-		{
-			IPagedList<LogRecord> model = null;
+		//public ActionResult GetRecords(RecordFilter rules)
+		//{
+		//	IPagedList<LogRecord> model = null;
 
-			//var filter = JsonConvert.DeserializeObject<RecordFilter>(filterJson ?? "") ?? new RecordFilter();
+		//	//var filter = JsonConvert.DeserializeObject<RecordFilter>(filterJson ?? "") ?? new RecordFilter();
+
+		//	using (var context = AppDbContext)
+		//	{
+		//		var prepModel = context.LogRecords
+		//			.Include(x => x.FailedTests);
+
+		//		if (rules.filter != null && rules.filter.Any())
+		//		{
+		//			var filter = string.Join(" AND ", rules.filter.Select(x => $"{x.Key} = \"{x.Value}\""));
+		//			prepModel = prepModel.Where(filter);
+		//		}
+
+		//		model = prepModel
+		//			.OrderBy(x => x.TimestampUTC)
+		//			.ToPagedList(rules.page, rules.size);
+		//	}
+
+		//	return SerializeForJson(new {
+		//		data = model.ToList(),
+		//		metadata = model.GetMetaData(),
+		//		filter = rules
+		//	});
+		//}
+
+		public ActionResult GetRecords(DataTableDateFilteredRequest rules)
+		{
+			IList<LogRecord> data = null;
+			int total = 0;
+			int filtered = 0;
 
 			using (var context = AppDbContext)
 			{
+				context.Configuration.ProxyCreationEnabled = false;
+				context.Configuration.LazyLoadingEnabled = false;
+
 				var prepModel = context.LogRecords
 					.Include(x => x.FailedTests);
 
-				if (rules.filter != null && rules.filter.Any())
+				// Date Filtering
+				if(rules.fromDate.HasValue && rules.fromDate != DateTime.MinValue)
 				{
-					var filter = string.Join(" AND ", rules.filter.Select(x => $"{x.Key} = \"{x.Value}\""));
-					prepModel = prepModel.Where(filter);
+					prepModel = prepModel.Where(x => x.TimestampUTC >= rules.fromDate.Value);
+
+					if (rules.toDate.HasValue && rules.toDate != DateTime.MinValue)
+					{
+						prepModel = prepModel.Where(x => x.TimestampUTC <= rules.toDate.Value);
+					}
 				}
 
-				model = prepModel
-					.OrderBy(x => x.TimestampUTC)
-					.ToPagedList(rules.page, rules.size);
+				// Searching all columns, ugh
+				if (rules.search != null && !string.IsNullOrEmpty(rules.search.value))
+				{
+					var filter = string.Join(" OR ", rules.columns
+						.Where(x => x.searchable && x.data.ToLower() != "timestamputc")
+						.Select(x => $"{x.data}.ToLower().Contains(@0)")
+					);
+					// Should do a little clean up for us
+					prepModel = prepModel.Where(filter, rules.search.value.ToLower());
+				}
+
+				// Column-based searching
+				if (rules.columns.Any(x => x.searchable && x.search != null && !string.IsNullOrEmpty(x.search.value)))
+				{
+					foreach (var searchColumn in rules.columns.Where(x => x.searchable && x.search != null && !string.IsNullOrEmpty(x.search.value) && x.data.ToLower() != "timestamputc"))
+					{
+						prepModel = prepModel.Where($"{searchColumn.data}.ToLower().Contains(@0)", searchColumn.search.value.ToLower());
+					}
+				}
+
+				// Order (there is a requirement to have one)
+				if (rules.order.Any())
+				{
+					foreach (var orderColumn in rules.order)
+					{
+						var column = rules.columns[orderColumn.column];
+						prepModel = prepModel.OrderBy($"{column.data} {orderColumn.dir}");
+					}
+				} else
+					prepModel = prepModel.OrderBy("TimestampUTC DESC");
+
+
+				filtered = prepModel.Count();
+				data = prepModel.Skip(rules.start).Take(rules.length).ToList();
+				total = context.LogRecords.Count();
 			}
 
-			return SerializeForJson(new {
-				data = model.ToList(),
-				metadata = model.GetMetaData(),
-				filter = rules
+			// Going to remove some stuff
+			for (int i = 0; i < data.Count; i++)
+				data[i].FailedTests = null; // We don't need it, and i'm lazy.
+
+			return SerializeToJson(new DataTableFilterResponse<LogRecord>()
+			{
+				draw = rules.draw,
+				data = data,
+				recordsFiltered = filtered,
+				recordsTotal = total
 			});
 		}
 
@@ -131,7 +207,6 @@ namespace LogFileParser.Controllers
 			public int size { get; set; } = 25;
 			public Dictionary<string, string> filter { get; set; }
 		}
-
 
 		// Old Ajax Queries
 
@@ -169,7 +244,7 @@ namespace LogFileParser.Controllers
 				}
 
 			}
-			return SerializeForJson(new { labels = graphLabels, data = dataset });
+			return SerializeToJsonString(new { labels = graphLabels, data = dataset });
 		}
 
 		public ActionResult GetMessageClassMetrics()
@@ -189,7 +264,7 @@ namespace LogFileParser.Controllers
 					.ToList();
 			}
 
-			return SerializeForJson(data);
+			return SerializeToJsonString(data);
 		}
 
 		public ActionResult GetTopSendingIPs()
@@ -210,7 +285,7 @@ namespace LogFileParser.Controllers
 					.ToList();
 			}
 
-			return SerializeForJson(data);
+			return SerializeToJsonString(data);
 		}
 
 		public ActionResult GetTopSendingCountries()
@@ -231,7 +306,7 @@ namespace LogFileParser.Controllers
 					.ToList();
 			}
 
-			return SerializeForJson(data);
+			return SerializeToJsonString(data);
 		}
 
 		public ActionResult GetTopSendingCountriesOfMessageClass(string msgClass)
@@ -254,7 +329,7 @@ namespace LogFileParser.Controllers
 					.ToList();
 			}
 
-			return SerializeForJson(data);
+			return SerializeToJsonString(data);
 		}
 
 		public ActionResult GetMessageClassOverPercentage(string msgClass, int perc = 95)
@@ -301,7 +376,7 @@ namespace LogFileParser.Controllers
 
 			}
 
-			return SerializeForJson(data);
+			return SerializeToJsonString(data);
 		}
 
 		public ActionResult GetMessageClasses()
@@ -311,7 +386,7 @@ namespace LogFileParser.Controllers
 			using (var context = AppDbContext)
 				data = context.LogRecords.Select(x => x.MessageClass).Distinct().ToList();
 
-			return SerializeForJson(data);
+			return SerializeToJsonString(data);
 		}
 
 	}

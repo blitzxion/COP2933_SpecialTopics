@@ -234,6 +234,7 @@
     <Compile Include="Helpers\HtmlHelperExtensions.cs" />
     <Compile Include="Helpers\Infrastructure.cs" />
     <Compile Include="Hubs\LogFileProcessingHub.cs" />
+    <Compile Include="ViewModels\DataTableModels.cs" />
     <Compile Include="ViewModels\RecordsViewModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -265,6 +266,7 @@
     <Content Include="Content\plugins\bootstrapDatepicker\bootstrap-datepicker.standalone.min.css" />
     <Content Include="Content\plugins\bootstrapDatepicker\bootstrap-datepicker3.standalone.min.css" />
     <Content Include="Content\plugins\datatables\datatables.min.css" />
+    <Content Include="Content\plugins\datatables\dataTables.css" />
     <Content Include="Content\plugins\jasny\jasny-bootstrap.min.css" />
     <Content Include="Content\plugins\jQueryBuilder\query-builder.dark.css" />
     <Content Include="Content\plugins\jQueryBuilder\query-builder.dark.min.css" />
@@ -378,6 +380,7 @@
     <Content Include="Scripts\plugins\chartjs\Chart.min.js" />
     <Content Include="Scripts\plugins\datatables\datatables.min.js" />
     <Content Include="Scripts\plugins\bootstrapDatepicker\bootstrap-datepicker.min.js" />
+    <Content Include="Scripts\plugins\datatables\dataTables.js" />
     <Content Include="Scripts\plugins\jasny\jasny-bootstrap.min.js" />
     <Content Include="Scripts\plugins\jQueryBuilder\query-builder.js" />
     <Content Include="Scripts\plugins\jQueryBuilder\query-builder.min.js" />

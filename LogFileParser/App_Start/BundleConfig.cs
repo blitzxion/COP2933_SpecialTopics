@@ -59,7 +59,7 @@ namespace LogFileParser
 				"~/Scripts/plugins/canvasjs/jquery.canvasjs.min.js"));
 
 			// dataTables css styles
-			bundles.Add(new StyleBundle("~/Content/plugins/dataTables/dataTablesStyles").Include(
+			bundles.Add(new StyleBundle("~/Content/plugins/dataTables").Include(
 				"~/Content/plugins/dataTables/datatables.min.css"));
 
 			// dataTables 

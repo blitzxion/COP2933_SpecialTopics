@@ -65,7 +65,7 @@ namespace LogFileParser.Controllers
 				LastPage = model.PageCount
 			};
 
-			return SerializeForJson(objData);
+			return SerializeToJsonString(objData);
 		}
 
 		public ActionResult MessagesPerCountryQuery(FilteringRules filterRule)
@@ -92,7 +92,7 @@ namespace LogFileParser.Controllers
 				LastPage = model.PageCount
 			};
 
-			return SerializeForJson(objData);
+			return SerializeToJsonString(objData);
 		}
 		
 		// Utils

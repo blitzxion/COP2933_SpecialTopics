@@ -13,9 +13,11 @@
 		<div class="col-md-12">
 
 			<div class="panel panel-default">
+
 				<div class="panel-heading">
 					<h3 class="panel-title">Data Table</h3>
 				</div>
+
 				<div class="panel-body">
 					<div class="row">
 						<div class="col-md-6">
@@ -41,46 +43,37 @@
 							</div>
 						</div>
 
-						<div class="col-md-12 filterTagOuput"></div> 
+						@*<div class="col-md-12 filterTagOuput"></div>*@
 					</div>
 				</div>
 
+
 				<div class="table-responsive">
-					<table class="table" data-url="@Url.Action("GetRecords","Records")">
+					<table class="table table-striped table-bordered table-hover" data-url="@Url.Action("GetRecords","Records")" width="100%">
 						<thead>
 							<tr>
-								<th data-field="timestampUTC" data-can-filter="false" data-date-format="DD/MM/YYYY h:mm:ss A">Date\Time UTC</th>
-								<th data-field="messageClass" data-can-filter="true" >Message Class</th>
-								<th data-field="sendingIP" data-can-filter="true">Sending IP</th>
-								<th data-field="receivingIP" data-can-filter="true">Receiving IP</th>
-								<th data-field="country" data-can-filter="true">Country</th>
+								<th data-field="TimestampUTC" data-can-filter="false" data-date-format="MM/DD/YYYY h:mm:ss A">Date\Time UTC</th>
+								<th data-field="MessageClass" data-can-filter="true">Message Class</th>
+								<th data-field="SendingIP" data-can-filter="true">Sending IP</th>
+								<th data-field="ReceivingIP" data-can-filter="true">Receiving IP</th>
+								<th data-field="Country" data-can-filter="true">Country</th>
 							</tr>
 						</thead>
 						<tbody></tbody>
+						<tfoot>
+							<tr>
+								<th></th>
+								<th>Message Class</th>
+								<th>Sending IP</th>
+								<th>Receiving IP</th>
+								<th>Country</th>
+							</tr>
+						</tfoot>
 					</table>
 				</div>
 
-				<div class="panel-footer">
-					<div class="row">
-						<div class="col-md-4">
-							<div class="text-left">
-								<button data-nav="first" class="btn btn-warning">First Page</button>
-								<button data-nav="previous" class="btn btn-primary">Previous Page</button>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="text-center" data-nav="metadata"></div>
-						</div>
-						<div class="col-md-4">
-							<div class="text-right">
-								<button data-nav="next" class="btn btn-primary">Next Page</button>
-								<button data-nav="last" class="btn btn-warning">Last Page</button>
-							</div>
-						</div>
-					</div>
-				</div>
-
 			</div>
+
 
 		</div>
 
@@ -91,10 +84,12 @@
 
 @section Styles {
 	@Styles.Render("~/Content/bs-datetimepicker")
+	@Styles.Render("~/Content/plugins/dataTables")
 }
 
 @section Scripts {
 	@Scripts.Render("~/bundles/bs-datetimepicker")
+	@Scripts.Render("~/plugins/dataTables")
 
 	<script>
 		(function () {
@@ -103,11 +98,15 @@
 				sideBySide: true,
 				useCurrent: false
 			});
-			$("#start_date").on("dp.change", function (e) {
+
+			$("#start_date").on("keyup blur change dp.change", function (e) {
 				$('#end_date').data("DateTimePicker").minDate(e.date);
+				dTable.draw();
 			});
-			$("#end_date").on("dp.change", function (e) {
+
+			$("#end_date").on("keyup blur change dp.change", function (e) {
 				$('#start_date').data("DateTimePicker").maxDate(e.date);
+				dTable.draw();
 			});
 
 
@@ -119,7 +118,7 @@
 					tableId: null,
 					url: null,
 					fields: [],
-					filterTagOutput:null,
+					filterTagOutput: null,
 					nav: {
 						first: null,
 						last: null,
@@ -237,7 +236,7 @@
 						var tr = $("<tr/>");
 
 						self.TableHeaders.each(function () {
-							
+
 							var fieldName = $(this).data('field');
 							var fieldValue = item[fieldName];
 							var canFilter = $(this).data('can-filter');
@@ -321,19 +320,67 @@
 			};
 
 			var table = $('table[data-url]');
+			var fields = $('th[data-field]').map(function () {
 
-			var cat = new CustomAjaxTable({
-				tableId: table,
-				url: table.data('url'),
-				filterTagOutput: ".filterTagOuput",
-				nav: {
-					first: $('[data-nav="first"]'),
-					last: $('[data-nav="last"]'),
-					previous: $('[data-nav="previous"]'),
-					next: $('[data-nav="next"]'),
-					metadata: $('[data-nav="metadata"]')
+				var config = {
+					data: $(this).data('field'),
+					name: $(this).text(),
+					searchable: $(this).data('can-filter') == true
 				}
+
+				// Date field requires special treatment
+				if ($(this).data('date-format')) {
+					var format = $(this).data('date-format');
+					config['render'] = function (data, type, full, meta) {
+						return moment(data).format(format);
+					};
+				}
+
+				return config;
 			});
+
+			var dTable = table.DataTable({
+				processing: true,
+				serverSide: true,
+				responsive: true,
+				ajax: {
+					url: table.data('url'),
+					dataType: 'json',
+					type: "POST",
+					// The following are extra fields added to the underlying data object
+					data: function(d) {
+						d.fromDate = $('#start_date').data("DateTimePicker").date().toISOString(),
+						d.toDate = $('#end_date').data("DateTimePicker").date().toISOString()
+						return d;
+					}
+				},
+				columns: fields
+			});
+
+			table.find('tfoot th').not(":first").each(function () {
+				var title = $(this).text();
+				$(this).html($("<input/>", { type: "text", placeholder: "Search " + title }));
+			});
+
+			dTable.columns().every(function () {
+				var self = this;
+				$('input', self.footer()).on('keyup change', function () {
+					self.search(this.value).draw();
+				});
+			});
+
+			//var cat = new CustomAjaxTable({
+			//	tableId: table,
+			//	url: table.data('url'),
+			//	filterTagOutput: ".filterTagOuput",
+			//	nav: {
+			//		first: $('[data-nav="first"]'),
+			//		last: $('[data-nav="last"]'),
+			//		previous: $('[data-nav="previous"]'),
+			//		next: $('[data-nav="next"]'),
+			//		metadata: $('[data-nav="metadata"]')
+			//	}
+			//});
 
 			// Utils
 			function LoadAjax(url, data, callback) {

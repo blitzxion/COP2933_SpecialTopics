@@ -91,7 +91,7 @@ namespace LogFileParser.Controllers
 			TempData["success"] = message;
 		}
 
-		protected virtual JsonResult SerializeForJson(object obj)
+		protected virtual JsonResult SerializeToJsonString(object obj)
 		{
 			JsonSerializerSettings JSONSettings = new JsonSerializerSettings
 			{
@@ -100,6 +100,11 @@ namespace LogFileParser.Controllers
 			};
 
 			return Json(JsonConvert.SerializeObject(obj, JSONSettings), JsonRequestBehavior.AllowGet);
+		}
+
+		protected virtual JsonResult SerializeToJson(object obj)
+		{
+			return Json(obj, JsonRequestBehavior.AllowGet);
 		}
 
 	}
