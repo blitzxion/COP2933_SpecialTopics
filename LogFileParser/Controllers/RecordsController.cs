@@ -153,12 +153,16 @@ namespace LogFileParser.Controllers
 				// Searching all columns, ugh
 				if (rules.search != null && !string.IsNullOrEmpty(rules.search.value))
 				{
+					var searchVal = rules.search.value.ToLower();
+					var isStrictSearch = (searchVal.StartsWith("\"") && searchVal.EndsWith("\""));
+					searchVal = searchVal.Replace("\"", "");
+
 					var filter = string.Join(" OR ", rules.columns
 						.Where(x => x.searchable && x.data.ToLower() != "timestamputc")
-						.Select(x => $"{x.data}.ToLower().Contains(@0)")
+						.Select(x => (isStrictSearch) ? $"{x.data}.ToLower().Equals(@0)" : $"{x.data}.ToLower().Contains(@0)")
 					);
 					// Should do a little clean up for us
-					prepModel = prepModel.Where(filter, rules.search.value.ToLower());
+					prepModel = prepModel.Where(filter, searchVal);
 				}
 
 				// Column-based searching
@@ -166,7 +170,13 @@ namespace LogFileParser.Controllers
 				{
 					foreach (var searchColumn in rules.columns.Where(x => x.searchable && x.search != null && !string.IsNullOrEmpty(x.search.value) && x.data.ToLower() != "timestamputc"))
 					{
-						prepModel = prepModel.Where($"{searchColumn.data}.ToLower().Contains(@0)", searchColumn.search.value.ToLower());
+						var searchVal = searchColumn.search.value.ToLower();
+						var isStrictSearch = (searchVal.StartsWith("\"") && searchVal.EndsWith("\""));
+						searchVal = searchVal.Replace("\"", "");
+
+						var filter = (isStrictSearch) ? $"{searchColumn.data}.ToLower().Equals(@0)" : $"{searchColumn.data}.ToLower().Contains(@0)";
+
+						prepModel = prepModel.Where(filter, searchVal);
 					}
 				}
 

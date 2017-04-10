@@ -111,6 +111,10 @@ namespace LogFileParser
 			// Font Awesome icons
 			bundles.Add(new StyleBundle("~/font-awesome/css").Include(
 				"~/fonts/font-awesome/css/font-awesome.min.css", new CssRewriteUrlTransform()));
+
+			bundles.Add(new ScriptBundle("~/bundles/utils").Include(
+				"~/Scripts/utils.js"));
+
 		}
 	}
 }

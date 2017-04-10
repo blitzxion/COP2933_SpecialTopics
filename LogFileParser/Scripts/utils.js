@@ -14,3 +14,7 @@ function LoadMetrics(url, onSuccess) {
 		}
 	});
 }
+
+$.fn.hasData = function (key) {
+	return (typeof $(this).data(key) != 'undefined');
+}

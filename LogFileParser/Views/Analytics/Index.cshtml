@@ -63,10 +63,10 @@
 						<tfoot>
 							<tr>
 								<th></th>
-								<th>Message Class</th>
-								<th>Sending IP</th>
-								<th>Receiving IP</th>
-								<th>Country</th>
+								<th data-field="MessageClass">Message Class</th>
+								<th data-field="SendingIP">Sending IP</th>
+								<th data-field="ReceivingIP">Receiving IP</th>
+								<th data-field="Country">Country</th>
 							</tr>
 						</tfoot>
 					</table>
@@ -85,6 +85,14 @@
 @section Styles {
 	@Styles.Render("~/Content/bs-datetimepicker")
 	@Styles.Render("~/Content/plugins/dataTables")
+
+	<style>
+		.table tbody tr td:not(:first-child) {
+			text-decoration:underline;
+			cursor:pointer
+		}
+	</style>
+
 }
 
 @section Scripts {
@@ -320,7 +328,13 @@
 			};
 
 			var table = $('table[data-url]');
-			var fields = $('th[data-field]').map(function () {
+
+			table.find('tfoot tr th[data-field]').each(function () {
+				var title = $(this).text();
+				$(this).html($("<input/>", { type: "text", placeholder: "Search " + title }));
+			});
+
+			var fields = $('thead tr th[data-field]').map(function () {
 
 				var config = {
 					data: $(this).data('field'),
@@ -348,18 +362,23 @@
 					dataType: 'json',
 					type: "POST",
 					// The following are extra fields added to the underlying data object
-					data: function(d) {
-						d.fromDate = $('#start_date').data("DateTimePicker").date().toISOString(),
-						d.toDate = $('#end_date').data("DateTimePicker").date().toISOString()
+					data: function (d) {
+						var fromDate = $('#start_date').data("DateTimePicker").date();
+						var toDate = $('#end_date').data("DateTimePicker").date()
+
+						d.fromDate = fromDate ? fromDate.toISOString() : null;
+						d.toDate = toDate ? toDate.toISOString() : null;
 						return d;
 					}
 				},
 				columns: fields
 			});
 
-			table.find('tfoot th').not(":first").each(function () {
-				var title = $(this).text();
-				$(this).html($("<input/>", { type: "text", placeholder: "Search " + title }));
+			dTable.on('click', 'td', function (e) {
+				var cell = dTable.cell(this);
+				var cell_clicked = cell.data();
+				var column_footer = dTable.column(this).footer();
+				$(column_footer).find('input').val("\"" + cell_clicked + "\"").trigger("change");
 			});
 
 			dTable.columns().every(function () {
