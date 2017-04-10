@@ -116,18 +116,22 @@
 			});
 
 
+			// The base Table
 			var table = $('table[data-url]');
 
+			// Addin search inputs to the footer of each column that has a data-field
 			table.find('tfoot tr th[data-field]').each(function () {
 				var title = $(this).text();
 				$(this).html($("<input/>", { type: "text", placeholder: "Search " + title }));
 			});
 
-
+			// Generate the crazy DataTable
 			var dTable = table.DataTable({
-				processing: true,
-				serverSide: true,
-				responsive: true,
+				processing: true, // Show a loading overlay
+				serverSide: true, // Disables client side filtering, requires the server to do it all
+				responsive: true, // Not sure if this even works...
+
+				// The ajax-y feel to the table
 				ajax: {
 					url: table.data('url'),
 					dataType: 'json',
@@ -142,6 +146,8 @@
 						return d;
 					}
 				},
+
+				// Loading in the columns we care, and then have some subtle rendering
 				columns: $('thead tr th[data-field]').map(function () {
 
 					var config = {
@@ -162,6 +168,7 @@
 				})
 			});
 
+			// When they click on a cell, I want to do a strict search on what they clicked by adding it the footer input.
 			dTable.on('click', 'td', function (e) {
 				var cell = dTable.cell(this);
 				var cell_clicked = cell.data();
@@ -169,30 +176,14 @@
 				$(column_footer).find('input').val("\"" + cell_clicked + "\"").trigger("change");
 			});
 
+			// Since the inputs don't have knowlege of the column to perform a search on, 
+			// use the jQuery DataTable's columns() call to get all the columns, and add the event to the input
 			dTable.columns().every(function () {
 				var self = this;
 				$('input', self.footer()).on('keyup change', function () {
 					self.search(this.value).draw();
 				});
 			});
-
-
-			// Utils
-			function LoadAjax(url, data, callback) {
-				$.ajax({
-					url: url,
-					dataType: 'json',
-					data: data,
-					success: function (data) {
-						if (callback)
-							callback(JSON.parse(data));
-					},
-					error: function (xhr, options, error) {
-						console.log("request failed", xhr, options, error);
-					}
-				});
-			}
-
 
 		})();
 

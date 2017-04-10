@@ -20,8 +20,8 @@ namespace LogFileParser.ViewModels
 		public int start { get; set; }
 		public int length { get; set; }
 		public DataTableSearch search { get; set; }
-		public IList<DataTableOrder> order { get; set; }
-		public IList<DataTableColumn> columns { get; set; }
+		public IList<DataTableOrder> order { get; set; } = new List<DataTableOrder>();
+		public IList<DataTableColumn> columns { get; set; } = new List<DataTableColumn>();
 	}
 
 	public class DataTableSearch
@@ -42,7 +42,7 @@ namespace LogFileParser.ViewModels
 		public string name { get; set; }
 		public bool searchable { get; set; }
 		public bool orderable { get; set; }
-		public DataTableSearch search { get; set; }
+		public DataTableSearch search { get; set; } = new DataTableSearch();
 	}
 
 	public class DataTableFilterResponse<TData>
@@ -59,8 +59,8 @@ namespace LogFileParser.ViewModels
 	{
 		public string DT_RowId { get; set; }
 		public string DT_RowClass { get; set; }
-		public Dictionary<string, string> DT_RowData { get; set; }
-		public Dictionary<string, string> DT_RowAttr { get; set; }
+		public Dictionary<string, string> DT_RowData { get; set; } = new Dictionary<string, string>();
+		public Dictionary<string, string> DT_RowAttr { get; set; } = new Dictionary<string, string>();
 	}
 
 }
