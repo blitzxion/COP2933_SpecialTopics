@@ -42,8 +42,6 @@
 								</div>
 							</div>
 						</div>
-
-						@*<div class="col-md-12 filterTagOuput"></div>*@
 					</div>
 				</div>
 
@@ -118,215 +116,6 @@
 			});
 
 
-			var CustomAjaxTable = function (_options) {
-
-				var self = this;
-
-				var defaults = {
-					tableId: null,
-					url: null,
-					fields: [],
-					filterTagOutput: null,
-					nav: {
-						first: null,
-						last: null,
-						previous: null,
-						next: null,
-						metadata: null,
-					}
-				};
-				var options = $.extend(defaults, {}, _options);
-
-				this.Table = $(options.tableId);
-				this.TableHeaders = self.Table.find('[data-field]');
-				this.TableBody = self.Table.find('tbody');
-
-				// Filled when data is collected again
-				this.Metadata = {};
-				this.Data = [];
-				this.Rules = {
-					page: 1,
-					size: 25,
-					filter: null
-				};
-
-				this.GetData = function (page, size) {
-					page = page || self.Rules.page;
-					size = size || self.Rules.size;
-
-					var parms = { page: page, size: size };
-					if (self.Rules.filter)
-						parms['filter'] = self.Rules.filter;
-
-					LoadAjax(options.url, parms, function (data) {
-
-						self.Data = data.data;
-						self.Metadata = data.metadata;
-						self.Rules = data.filter; // Will have page, size and filter
-
-						if (self.Rules.filter == null)
-							self.Rules.filter = {};
-
-						self.UpdateTable(self.Data);
-						self.UpdateNavigation();
-						self.UpdateFilterTags();
-					});
-				};
-
-				this.Setup = function () {
-
-					// Navigation
-
-					if (options.nav.first) {
-						$(options.nav.first).on('click', function (e) {
-							e.preventDefault();
-							console.log("First Page", 1);
-							self.GetData(1);
-						})
-					}
-
-					if (options.nav.last) {
-						$(options.nav.last).on('click', function (e) {
-							e.preventDefault();
-							console.log("Last Page", self.Metadata.pageCount);
-							self.GetData(self.Metadata.pageCount);
-						})
-					}
-
-					if (options.nav.next) {
-						$(options.nav.next).on('click', function (e) {
-							e.preventDefault();
-							console.log("Next Page", self.Metadata.pageNumber + 1);
-							self.GetData(self.Metadata.pageNumber + 1);
-						})
-					}
-
-					if (options.nav.previous) {
-						$(options.nav.previous).on('click', function (e) {
-							e.preventDefault();
-							console.log("Previous Page", self.Metadata.pageNumber - 1);
-							self.GetData(self.Metadata.pageNumber - 1);
-						})
-					}
-
-					// Field-level Filtering
-
-					self.Table.on('click', 'a[data-cat-filter]', function (e) {
-						e.preventDefault();
-
-						var filterField = $(this).data('cat-filter');
-						var filterValue = $(this).text();
-
-						self.Rules.filter[filterField] = filterValue;
-
-						// Filtering will go back to page one.
-						self.GetData(1, self.Size);
-					});
-
-					if ($(options.filterTagOutput).length > 0) {
-						$(options.filterTagOutput).on('click', 'a[data-tag-filter]', function (e) {
-							e.preventDefault();
-							var filter = $(this).data('tag-filter');
-							delete self.Rules.filter[filter]; // lol filter filter filter
-							$(this).parent().remove();
-							self.GetData(1, self.Size);
-						});
-					}
-
-				};
-
-				this.UpdateTable = function (data) {
-
-					self.TableBody.empty();
-
-					$.each(data, function (i, item) {
-
-						var tr = $("<tr/>");
-
-						self.TableHeaders.each(function () {
-
-							var fieldName = $(this).data('field');
-							var fieldValue = item[fieldName];
-							var canFilter = $(this).data('can-filter');
-							var dateFormat = $(this).data('date-format');
-
-							if (dateFormat) fieldValue = moment(fieldValue).format(dateFormat);
-
-							var newElem = canFilter ? $('<a/>', { 'data-cat-filter': fieldName }).text(fieldValue) : fieldValue;
-
-							tr.append($("<td/>").append(newElem));
-
-						});
-
-						self.TableBody.append(tr);
-
-					});
-
-				};
-
-				this.UpdateNavigation = function () {
-
-					if (options.nav.first) $(options.nav.first).toggle(!self.Metadata.isFirstPage);
-
-					if (options.nav.last) $(options.nav.last).toggle(!self.Metadata.isLastPage);
-
-					if (options.nav.next) $(options.nav.next).toggle(self.Metadata.hasNextPage);
-
-					if (options.nav.previous) $(options.nav.previous).toggle(self.Metadata.hasPreviousPage);
-
-					if (options.nav.metadata) {
-
-						var ms = function (txt) { return $("<span/>").text(txt); };
-
-						var page = ms(self.Metadata.pageNumber);
-						var ofPage = ms(self.Metadata.pageCount);
-						var showing = ms(self.Metadata.firstItemOnPage);
-						var to = ms(self.Metadata.lastItemOnPage);
-						var of = ms(self.Metadata.totalItemCount);
-
-						$(options.nav.metadata).empty();
-
-						$(options.nav.metadata)
-							.append("Page ").append(page)
-							.append(" of ").append(ofPage)
-							.append(" | Showing ").append(showing)
-							.append(" - ").append(to)
-							.append(" of ").append(of).append(" records");
-					}
-
-				};
-
-				this.UpdateFilterTags = function () {
-
-					if (!options.filterTagOutput) return;
-
-					$(options.filterTagOutput).empty();
-
-					$.each(self.Rules.filter, function (i, filter) {
-
-						// <span class="tag label label-primary">
-						//	<span>MessageClass</span>: <a href="#"><i class="glyphicon glyphicon-remove-sign glyphicon-white"></i></a>
-						// </span>
-
-						var tagHtml = '<span class="tag label label-primary"><span data-tag="name"></span> <a href="#"><i class="glyphicon glyphicon-remove-sign glyphicon-white"></i></a></span>';
-						var tag = $(tagHtml)
-							.find("[data-tag='name']").text(i + ": " + filter).end()
-							.find("a").attr("data-tag-filter", i).end();
-
-						$(options.filterTagOutput).append(tag);
-
-					});
-
-				};
-
-				// Construct
-				self.Setup();
-
-				self.GetData(1, 25);
-				self.UpdateNavigation();
-
-			};
-
 			var table = $('table[data-url]');
 
 			table.find('tfoot tr th[data-field]').each(function () {
@@ -334,24 +123,6 @@
 				$(this).html($("<input/>", { type: "text", placeholder: "Search " + title }));
 			});
 
-			var fields = $('thead tr th[data-field]').map(function () {
-
-				var config = {
-					data: $(this).data('field'),
-					name: $(this).text(),
-					searchable: $(this).data('can-filter') == true
-				}
-
-				// Date field requires special treatment
-				if ($(this).data('date-format')) {
-					var format = $(this).data('date-format');
-					config['render'] = function (data, type, full, meta) {
-						return moment(data).format(format);
-					};
-				}
-
-				return config;
-			});
 
 			var dTable = table.DataTable({
 				processing: true,
@@ -371,7 +142,24 @@
 						return d;
 					}
 				},
-				columns: fields
+				columns: $('thead tr th[data-field]').map(function () {
+
+					var config = {
+						data: $(this).data('field'),
+						name: $(this).text(),
+						searchable: $(this).data('can-filter') == true
+					}
+
+					// Date field requires special treatment
+					if ($(this).data('date-format')) {
+						var format = $(this).data('date-format');
+						config['render'] = function (data, type, full, meta) {
+							return moment(data).format(format);
+						};
+					}
+
+					return config;
+				})
 			});
 
 			dTable.on('click', 'td', function (e) {
@@ -388,18 +176,6 @@
 				});
 			});
 
-			//var cat = new CustomAjaxTable({
-			//	tableId: table,
-			//	url: table.data('url'),
-			//	filterTagOutput: ".filterTagOuput",
-			//	nav: {
-			//		first: $('[data-nav="first"]'),
-			//		last: $('[data-nav="last"]'),
-			//		previous: $('[data-nav="previous"]'),
-			//		next: $('[data-nav="next"]'),
-			//		metadata: $('[data-nav="metadata"]')
-			//	}
-			//});
 
 			// Utils
 			function LoadAjax(url, data, callback) {
