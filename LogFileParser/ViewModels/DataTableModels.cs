@@ -12,8 +12,6 @@ namespace LogFileParser.ViewModels
 		public DateTime? toDate { get; set; }
 	}
 
-
-
 	public class DataTableFilterRequest
 	{
 		public int draw { get; set; }

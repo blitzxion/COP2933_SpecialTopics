@@ -64,7 +64,8 @@ namespace LogFileParser
 
 			// dataTables 
 			bundles.Add(new ScriptBundle("~/plugins/dataTables").Include(
-				"~/Scripts/plugins/dataTables/datatables.min.js"));
+				"~/Scripts/plugins/dataTables/datatables.min.js",
+				"~/Scripts/plugins/dataTables/datetime.js"));
 
 			// jQuery Builder JS and CSS
 			bundles.Add(new ScriptBundle("~/plugins/queryBuilder").Include(
@@ -113,6 +114,8 @@ namespace LogFileParser
 				"~/fonts/font-awesome/css/font-awesome.min.css", new CssRewriteUrlTransform()));
 
 			bundles.Add(new ScriptBundle("~/bundles/utils").Include(
+				"~/Scripts/linq.js",
+				"~/Scripts/color-hash.js",
 				"~/Scripts/utils.js"));
 
 		}

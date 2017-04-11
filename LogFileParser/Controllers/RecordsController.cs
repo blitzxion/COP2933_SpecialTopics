@@ -127,9 +127,9 @@ namespace LogFileParser.Controllers
 
 		public ActionResult GetRecords(DataTableDateFilteredRequest rules)
 		{
-			IList<LogRecord> data = null;
-			int total = 0;
-			int filtered = 0;
+			IList<LogRecord> filteredData = null;
+			int totalRecords = 0;
+			int filteredCount = 0;
 
 			using (var context = AppDbContext)
 			{
@@ -192,30 +192,28 @@ namespace LogFileParser.Controllers
 					prepModel = prepModel.OrderBy("TimestampUTC DESC");
 
 
-				filtered = prepModel.Count();
-				data = prepModel.Skip(rules.start).Take(rules.length).ToList();
-				total = context.LogRecords.Count();
+				filteredCount = prepModel.Count();
+
+				// Don't do Skip()/Take() if they passed in a length that is less than 1
+				if (rules.length > 1)
+					filteredData = prepModel.Skip(rules.start).Take(rules.length).ToList();
+				else
+					filteredData = prepModel.ToList();
+
+				totalRecords = 250000; // context.LogRecords.Count(); // I know, complain. This is a school project.
 			}
 
 			// Going to remove some stuff
-			for (int i = 0; i < data.Count; i++)
-				data[i].FailedTests = null; // We don't need it, and i'm lazy.
+			for (int i = 0; i < filteredData.Count; i++)
+				filteredData[i].FailedTests = null; // We don't need it, and i'm lazy.
 
-			return SerializeToJson(new DataTableFilterResponse<LogRecord>()
+			return SerializeToJsonFormatted(new DataTableFilterResponse<LogRecord>()
 			{
 				draw = rules.draw,
-				data = data,
-				recordsFiltered = filtered,
-				recordsTotal = total
+				data = filteredData,
+				recordsFiltered = filteredCount,
+				recordsTotal = totalRecords
 			});
-		}
-
-		// Helper Classes (because Project, that's why)
-		public class RecordFilter
-		{
-			public int page { get; set; } = 1;
-			public int size { get; set; } = 25;
-			public Dictionary<string, string> filter { get; set; }
 		}
 
 		// Old Ajax Queries
