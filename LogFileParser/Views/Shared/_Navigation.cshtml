@@ -9,14 +9,16 @@
 			<li class="@Html.IsSelected(controller:"Home")">
 				<a href="@Url.Action("Index", "Home")"><i class="fa fa-laptop"></i> <span class="nav-label">Home</span> </a>
 			</li>
+			<li class="@Html.IsSelected(controller:"Analytics")">
+				<a href="@Url.Action("Index", "Analytics")"><i class="fa fa-area-chart"></i> <span class="nav-label" data-i18n="nav.Records">Analytics</span> <span class="fa arrow"></span></a>
+				<ul class="nav nav-second-level collapse @Html.IsSelected(controller: "Analytics", cssClass: "in")">
+					<li class="@Html.IsSelected("Analytics", "Index")"><a href="@Url.Action("Index", "Queries")">Playground</a></li>
+				</ul>
+			</li>
 			<li class="@Html.IsSelected(controller:"Queries")">
 				<a href="@Url.Action("Index", "Queries")"><i class="fa fa-area-chart"></i> <span class="nav-label" data-i18n="nav.Records">Queries</span> <span class="fa arrow"></span></a>
 				<ul class="nav nav-second-level collapse @Html.IsSelected(controller: "Queries", cssClass: "in")">
-					
 					<li class="@Html.IsSelected("Queries", "Index")"><a href="@Url.Action("Index", "Queries")">New Query</a></li>
-					<li class="@Html.IsSelected("CountryMessages", "Index")"><a href="@Url.Action("CountryMessages", "Queries")">Messages Per Country</a></li>
-					<li class="@Html.IsSelected("CountryMessagesGlobal", "Index")"><a href="@Url.Action("CountryMessagesGlobal", "Queries")">Messages Per Country</a></li>
-
 				</ul>
 			</li>
 			<li class="@Html.IsSelected(controller:"Records")">

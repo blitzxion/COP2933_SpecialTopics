@@ -95,7 +95,7 @@ namespace LogFileParser.Controllers
 		{
 			return new FormattedJsonResult() {
 				Data = obj,
-				JsonRequestBehavior = 	JsonRequestBehavior.AllowGet
+				JsonRequestBehavior = JsonRequestBehavior.AllowGet
 			};
 		}
 

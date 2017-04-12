@@ -13,6 +13,12 @@ namespace LogFileParser.ViewModels
 
 	}
 
+	public class DateGroupedMessages
+	{
+		public DateTime Date { get; set; }
+		public int Total { get; set; }
+	}
+
 	public class SampleGraphViewModel
 	{
 		public IEnumerable<MessageData> MessageData { get; set; }

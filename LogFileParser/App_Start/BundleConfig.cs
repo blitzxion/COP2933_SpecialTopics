@@ -75,6 +75,10 @@ namespace LogFileParser
 			bundles.Add(new StyleBundle("~/Content/plugins/queryBuilder").Include(
 				"~/Content/plugins/jQueryBuilder/query-builder.default.min.css"));
 
+			// MomentJS
+			bundles.Add(new ScriptBundle("~/bundles/momentjs").Include(
+				"~/Scripts/moment.min.js"));
+
 			// Bootstrap DateTimePicker
 			bundles.Add(new ScriptBundle("~/bundles/bs-datetimepicker").Include(
 				"~/Scripts/moment.min.js",
@@ -87,7 +91,11 @@ namespace LogFileParser
 			bundles.Add(new ScriptBundle("~/bundles/jquery-sortable").Include(
 				"~/Scripts/jquery-sortable.js"));
 
-			//bundles.Add(new ScriptBundle("~/bundles/d3").Include("~/Scripts/d3/d3.min.js"));
+			// D3
+			bundles.Add(new ScriptBundle("~/bundles/d3").Include("~/Scripts/d3/d3.js"));
+
+			// D3 v3
+			bundles.Add(new ScriptBundle("~/bundles/d3v3").Include("~/Scripts/d3v3/d3.js"));
 
 			// Planetary.js
 			bundles.Add(new ScriptBundle("~/bundles/planetary").Include(
@@ -100,6 +108,13 @@ namespace LogFileParser
 
 			bundles.Add(new StyleBundle("~/Content/jvectormaps").Include(
 				"~/Content/jquery-jvectormap.css"));
+
+			// Cal Heatmap
+			bundles.Add(new ScriptBundle("~/bundles/plugins/calHeatmap").Include(
+				"~/Scripts/plugins/calHeatmap/cal-heatmap.js"));
+
+			bundles.Add(new StyleBundle("~/Content/plugins/calHeatmap").Include(
+				"~/Content/plugins/calHeatmap/cal-heatmap.css"));
 
 			// CSS style (bootstrap/inspinia)
 			bundles.Add(new StyleBundle("~/Content/css").Include(

@@ -1,0 +1,37 @@
+﻿<div class="row border-bottom white-bg">
+    <nav class="navbar navbar-static-top" role="navigation">
+        <div class="navbar-header">
+			<button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse" class="navbar-toggle collapsed" type="button">
+				<i class="fa fa-reorder"></i>
+			</button>
+			<a href="@Url.Action("Index", "Home")" class="navbar-brand">LogParser</a>
+		</div>
+		<div class="navbar-collapse collapse" id="navbar">
+			<ul class="nav navbar-nav">
+
+				<li class="@Html.IsSelected(controller:"Analytics") dropdown">
+					<a aria-expanded="false" role="button" class="dropdown-toggle" data-toggle="dropdown" href="@Url.Action("Index", "Analytics")">Analytics <span class="caret"></span></a>
+					<ul role="menu" class="dropdown-menu">
+						<li class="@Html.IsSelected("Analytics", "Index")"><a href="@Url.Action("Index", "Analytics")">Playground</a></li>
+					</ul>
+				</li>
+
+				<li class="@Html.IsSelected(controller:"Queries") dropdown">
+					<a aria-expanded="false" role="button" class="dropdown-toggle" data-toggle="dropdown" href="@Url.Action("Index", "Queries")">Queries <span class="caret"></span></a>
+					<ul role="menu" class="dropdown-menu">
+						<li class="@Html.IsSelected("Queries", "Index")"><a href="@Url.Action("Index", "Queries")">New Query</a></li>
+					</ul>
+				</li>
+
+				<li class="@Html.IsSelected(controller:"Records") dropdown">
+					<a aria-expanded="false" role="button" class="dropdown-toggle" data-toggle="dropdown" href="@Url.Action("Index", "Records")">Records <span class="caret"></span></a>
+					<ul role="menu" class="dropdown-menu">
+						<li class="@Html.IsSelected("Records", "Index")"><a href="@Url.Action("Index", "Records")">All Records</a></li>
+						<li class="@Html.IsSelected("Records", "SampleGraph")"><a href="@Url.Action("SampleGraph", "Records")">Sample Graph</a></li>
+						<li class="@Html.IsSelected("Records", "Manage")"><a href="@Url.Action("Manage", "Records")">Management</a></li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+	</nav>
+</div>

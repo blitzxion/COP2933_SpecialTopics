@@ -70,60 +70,46 @@ namespace LogFileParser.Controllers
 
 		// JSON Actions
 
-		public ActionResult Populate()
+		public ActionResult GetMessageClasses()
 		{
-			if (!Request.IsAjaxRequest())
-			{
-				SetRedirectError("This method is not allowed via that protocol.");
-				return RedirectToActionPermanent("Manage");
-			}
+			List<string> data = new List<string>();
 
-			return Json(new { status = "complete", canPopulate = true, path = LogFilePath }, JsonRequestBehavior.AllowGet);
+			using (var context = AppDbContext)
+				data = context.LogRecords.Select(x => x.MessageClass).Distinct().ToList();
+
+			return SerializeToJsonString(data);
 		}
 
-		public ActionResult Delete()
+		public ActionResult GetDateGroupedMessages(string typeFilter)
 		{
-			if (!Request.IsAjaxRequest())
+			IEnumerable<DateGroupedMessages> model = new List<DateGroupedMessages>();
+
+			using (var context = AppDbContext)
 			{
-				SetRedirectError("This method is not allowed via that protocol.");
-				return RedirectToActionPermanent("Manage");
+				IQueryable<LogRecord> messages = context.LogRecords;
+
+				// Bust it down to a single type of messages, if asked for
+				if (!string.IsNullOrEmpty(typeFilter))
+					messages = messages.Where(x => x.MessageClass.Equals(typeFilter, StringComparison.InvariantCultureIgnoreCase));
+
+				// Group by the results, and send back the date/count
+				var results = messages
+					.GroupBy(x => new {
+						x.TimestampUTC.Year,
+						x.TimestampUTC.Month,
+						x.TimestampUTC.Day,
+						x.TimestampUTC.Hour
+					})
+					.Select(x => new { x.Key, Count = x.Count() });
+
+				// Really, Linq? You're going to do this...
+				model = results
+					.ToList()
+					.Select(x => new DateGroupedMessages() { Date = new DateTime(x.Key.Year, x.Key.Month, x.Key.Day, x.Key.Hour, 0, 0), Total = x.Count });
 			}
 
-			return Json(new { status = "complete", canDelete = true, path = LogFilePath }, JsonRequestBehavior.AllowGet);
+			return SerializeToJsonFormatted(model);
 		}
-
-
-		// Ajax/JSON Queries
-
-		//[JsonFilter(Parameter = "filter", JsonDataType = typeof(RecordFilter))]
-		//public ActionResult GetRecords(RecordFilter rules)
-		//{
-		//	IPagedList<LogRecord> model = null;
-
-		//	//var filter = JsonConvert.DeserializeObject<RecordFilter>(filterJson ?? "") ?? new RecordFilter();
-
-		//	using (var context = AppDbContext)
-		//	{
-		//		var prepModel = context.LogRecords
-		//			.Include(x => x.FailedTests);
-
-		//		if (rules.filter != null && rules.filter.Any())
-		//		{
-		//			var filter = string.Join(" AND ", rules.filter.Select(x => $"{x.Key} = \"{x.Value}\""));
-		//			prepModel = prepModel.Where(filter);
-		//		}
-
-		//		model = prepModel
-		//			.OrderBy(x => x.TimestampUTC)
-		//			.ToPagedList(rules.page, rules.size);
-		//	}
-
-		//	return SerializeForJson(new {
-		//		data = model.ToList(),
-		//		metadata = model.GetMetaData(),
-		//		filter = rules
-		//	});
-		//}
 
 		public ActionResult GetRecords(DataTableDateFilteredRequest rules)
 		{
@@ -140,7 +126,7 @@ namespace LogFileParser.Controllers
 					.Include(x => x.FailedTests);
 
 				// Date Filtering
-				if(rules.fromDate.HasValue && rules.fromDate != DateTime.MinValue)
+				if (rules.fromDate.HasValue && rules.fromDate != DateTime.MinValue)
 				{
 					prepModel = prepModel.Where(x => x.TimestampUTC >= rules.fromDate.Value);
 
@@ -188,7 +174,8 @@ namespace LogFileParser.Controllers
 						var column = rules.columns[orderColumn.column];
 						prepModel = prepModel.OrderBy($"{column.data} {orderColumn.dir}");
 					}
-				} else
+				}
+				else
 					prepModel = prepModel.OrderBy("TimestampUTC DESC");
 
 
@@ -387,15 +374,7 @@ namespace LogFileParser.Controllers
 			return SerializeToJsonString(data);
 		}
 
-		public ActionResult GetMessageClasses()
-		{
-			List<string> data = new List<string>();
 
-			using (var context = AppDbContext)
-				data = context.LogRecords.Select(x => x.MessageClass).Distinct().ToList();
-
-			return SerializeToJsonString(data);
-		}
 
 	}
 }
