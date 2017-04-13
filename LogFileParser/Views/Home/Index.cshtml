@@ -19,18 +19,21 @@
 
 	<div class="row">
 
-		<div class="col-md-4">
+		<div class="col-md-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title">Messages (Heatmap)</h3>
+					<h3 class="panel-title">Messages (Occurance Heatmap)</h3>
 				</div>
 				<div class="panel-body">
 					<div class="form-inline">
 						<div class="form-group">
 							<select class="form-control calendar-heatmap-messagetype"></select>
 						</div>
-						<button class="btn btn-default calendar-heatmap-previous"><span class="glyphicon glyphicon-backward"></span> Previous</button>
-						<button class="btn btn-default calendar-heatmap-next">Next <span class="glyphicon glyphicon-forward"></span></button>
+                        <div class="btn-group">
+                            <a href="#" class="btn btn-primary calendar-heatmap-previous">Previous</a>
+                            <a href="#" class="btn btn-primary calendar-heatmap-next">Next</a>
+                        </div>
+                        <a href="#" class="btn btn-warning calendar-heatmap-reset">Reset</a>
 					</div>
 					<hr />
 					<div class="calendar-heatmap"></div>
@@ -38,7 +41,7 @@
 			</div>
 		</div>
 
-		<div class="col-md-4">
+		<div class="col-md-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">Message Trends</h3>
@@ -49,7 +52,7 @@
 			</div>
 		</div>
 
-		<div class="col-md-4">
+		<div class="col-md-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">Message Statistics</h3>
@@ -68,15 +71,31 @@
 	@Styles.Render("~/Content/plugins/dataTables")
 	@Styles.Render("~/Content/plugins/calHeatmap")
 
+    <style>
+        .cal-heatmap-container {
+            margin: 0 auto;
+        }
+        .cal-heatmap-container .subdomain-text {
+            fill: white;
+            font-size:10px;
+        }
+        .cal-heatmap-container .graph-rect ~ .subdomain-text {
+            fill: inherit;
+        }
+        .cal-heatmap-container .graph-label {
+            font-weight:bold;
+        }
+    </style>
+
 }
 
 @section Scripts {
 	@*Scripts.Render("~/plugins/chartJs")
-		@Scripts.Render("~/plugins/jqcanvasjs")*@
+	@Scripts.Render("~/plugins/jqcanvasjs")*@
 
 	@Scripts.Render("~/bundles/momentjs")
-	@Scripts.Render("~/bundles/d3v3");
-	@Scripts.Render("~/bundles/plugins/calHeatmap");
+	@Scripts.Render("~/bundles/d3v3")
+	@Scripts.Render("~/bundles/plugins/calHeatmap")
 	@Scripts.Render("~/plugins/dataTables")
 
 	<script>
@@ -89,42 +108,117 @@
 			var msgTypesURL = "@Url.Action("GetMessageClasses", "Records")";
 			var msgDataURL = "@Url.Action("GetDateGroupedMessages", "Records")";
 
-			var messageTypes = [];
+		    var messageTypes = [];
 
+
+            // Start loading all the things!
 			LoadOptionsFromUrl(msgTypesURL, $('.calendar-heatmap-messagetype'), "- All -")
 				.then(function (typeData) { messageTypes = typeData; })
 				.then(function () { return GetData(msgDataURL); })
 				.catch(function (err) { console.log("Error", err); })
-				.then(function (msgData) { BuildHeatmap(msgData); })
+				.then(function (msgData) { BuildHeatmap(msgData, 'month'); })
 
 
+
+
+		    //////////////////
+		    // Events
+		    //////////////////
+
+            // Change the source of the heatmap
+			$('.calendar-heatmap-messagetype').on('change', function (e) {
+			    GetData(msgDataURL, { typeFilter: $(this).val() })
+                    .catch(function (err) { console.log("Error", err); })
+                    .then(function (msgData) { BuildHeatmap(msgData, calConfig ? calConfig.domain : 'month'); });
+			});
+
+			$('.calendar-heatmap-reset').on('click', function (e) {
+			    e.preventDefault();
+			    BuildHeatmap(calConfig.source, 'month');
+			});
 
 			//////////////////
 			// Methods
 			//////////////////
 
-			function BuildHeatmap(data) {
+			var cal = null;
+			var calConfig = null;
+			function BuildHeatmap(data, type) {
 
-				console.log(data);
+			    if (cal != null)
+			        cal = cal.destroy();
 
-				var cal = new CalHeatMap();
-				cal.init({
-					// data: data,
-					itemSelector: ".calendar-heatmap",
-					domain: "day",
-					subDomain: "hour",
-					rowLimit: 1,
-					domainGutter: 0,
-					cellSize: 15,
-					cellPadding: 5,
-					range: 7,
-					verticalOrientation: true,
-					label: { position: "left", offset: { x: 20, y: 12 }, width: 110 },
-					legend: [1, 2, 3, 4],
-					legendColors: ["#ecf5e2", "#232181"],
-					nextSelector: ".calendar-heatmap-next",
-					previousSelector: ".calendar-heatmap-previous"
-				});
+			    cal = new CalHeatMap();
+
+			    if (!type)
+			        type = 'month';
+
+			    var mData = {};
+
+			    var eData = Enumerable.From(data);
+			    var startDate = moment(eData.FirstOrDefault().date).toDate();
+			    var lastDate = moment(eData.LastOrDefault().date).toDate();
+
+                // Fill mData
+			    eData.ForEach(function (x) { mData[moment(x.date).unix()] = x.total; });
+
+                // Default config
+			    calConfig = {
+                    source: data, // So we can reuse the data again and not have to call it again
+			        data: mData,
+			        itemSelector: ".calendar-heatmap",
+			        start: (type == 'month') ? startDate : (calConfig.start || startDate),
+			        minDate: startDate,
+			        maxDate: lastDate,
+
+			        cellSize: 30,
+
+			        legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
+			        legendColors: ["#ecf5e2", "#232181"],
+			        legendOrientation: "vertical",
+			        legendVerticalPosition: "center",
+			        legendCellSize: 15,
+			        legendMargin: [10, 20, 0, 0],
+
+			        previousSelector: ".calendar-heatmap-previous",
+			        nextSelector: ".calendar-heatmap-next"
+
+			    };
+
+			    if (type == "month") {
+			        var upperDomain = eData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total");
+			        calConfig = $.extend(true, calConfig, {
+			            domain: "month",
+			            subDomain: "x_day",
+			            subDomainTextFormat: "%d",
+			            range: 2,
+			            domainGutter: 15,
+			            legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
+			            onClick: function (date, nb) {
+			                //$("#onClick-placeholder").html("You just clicked <br/>on <b>" + date + "</b> <br/>with <b>" + (nb === null ? "unknown" : nb) + "</b> items" );
+			                calConfig.start = moment(date).toDate();
+			                BuildHeatmap(calConfig.source, 'day', true);
+			            }
+			        });
+			    }
+
+			    if (type == "day") {
+			        var upperDomain = eData.Max("$.total");
+			        calConfig = $.extend(true, calConfig, {
+			            domain: "day",
+			            subDomain: "hour",
+			            subDomainTextFormat: "%H",
+			            rowLimit: 1,
+			            domainGutter: 0,
+			            cellPadding: 5,
+			            range: 7,
+			            verticalOrientation: true,
+			            legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
+			            label: { position: "left", offset: { x: 20, y: 12 }, width: 110 },
+			        });
+			    }
+                
+				cal.init(calConfig);
 			}
 
 
@@ -147,7 +241,7 @@
 					data = JSON.parse(data);
 
 					if (emptyText)
-						$('<option/>', { text: emptyText }).appendTo(element);
+						$('<option/>', { text: emptyText, value:"" }).appendTo(element);
 
 					$.each(data, function (i, obj) {
 						$('<option/>', {
