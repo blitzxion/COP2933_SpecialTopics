@@ -401,6 +401,7 @@
     <Content Include="Scripts\plugins\metisMenu\metisMenu.min.js" />
     <Content Include="Scripts\plugins\pace\pace.min.js" />
     <Content Include="Scripts\plugins\slimscroll\jquery.slimscroll.min.js" />
+    <Content Include="Scripts\regression.js" />
     <Content Include="Scripts\respond.js" />
     <Content Include="Scripts\respond.matchmedia.addListener.js" />
     <Content Include="Scripts\respond.matchmedia.addListener.min.js" />

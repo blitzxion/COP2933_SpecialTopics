@@ -127,11 +127,5 @@ namespace LogFileParser.Controllers
 
 		}
 
-		//public class FilterField
-		//{
-		//	public string Name { get; set; }
-		//	public string Augment { get; set; }
-		//}
-
 	}
 }

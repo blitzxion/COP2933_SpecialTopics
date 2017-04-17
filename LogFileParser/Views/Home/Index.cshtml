@@ -19,46 +19,107 @@
 
 	<div class="row">
 
-		<div class="col-md-6">
+		<!-- World Map -->
+		<div class="col-md-12">
+
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title">Messages (Occurance Heatmap)</h3>
+					<h3 class="panel-title">Message Appearance by Country</h3>
 				</div>
 				<div class="panel-body">
+					<div id="regions_div" style="height:800px; max-height:800px;"></div>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="col-md-4">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Top 10 Countries</h3>
+				</div>
+				<div class="panel-body">
+					<table class="table table-condensed table-hover table-striped topCountriesTbl">
+						<thead>
+							<tr>
+								<th>Rank</th>
+								<th>Country Code</th>
+								<th>Total Messages</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-8">
+
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Live Feed</h3>
+				</div>
+				<div class="panel-body">
+					<div class="life-feed-chart"></div>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- Top Three Message Types -->
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Overall Top 3 Message Types</h3>
+				</div>
+				<div class="panel-body">
+
+					<div class="row">
+						<div class="col-md-4">
+							<div class="top-message-chart" data-top-chart="1"></div>
+							<h3 class="text-center">--</h3>
+						</div>
+						<div class="col-md-4">
+							<div class="top-message-chart" data-top-chart="2"></div>
+							<h3 class="text-center">--</h3>
+						</div>
+						<div class="col-md-4">
+							<div class="top-message-chart" data-top-chart="3"></div>
+							<h3 class="text-center">--</h3>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+
+		<!-- Message Appearance -->
+		<!-- Message Traffic and trends -->
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Messages (Appearance Heatmap and Trend)</h3>
+				</div>
+				<div class="panel-body">
+
 					<div class="form-inline">
 						<div class="form-group">
 							<select class="form-control calendar-heatmap-messagetype"></select>
 						</div>
-                        <div class="btn-group">
-                            <a href="#" class="btn btn-primary calendar-heatmap-previous">Previous</a>
-                            <a href="#" class="btn btn-primary calendar-heatmap-next">Next</a>
-                        </div>
-                        <a href="#" class="btn btn-warning calendar-heatmap-reset">Reset</a>
+						<div class="btn-group">
+							<a href="#" class="btn btn-primary calendar-heatmap-previous">Previous</a>
+							<a href="#" class="btn btn-primary calendar-heatmap-next">Next</a>
+						</div>
+						<a href="#" class="btn btn-warning calendar-heatmap-reset">Reset</a>
 					</div>
+
 					<hr />
 					<div class="calendar-heatmap"></div>
-				</div>
-			</div>
-		</div>
+					<hr />
+					<div class="traffic-chart" style="height:380px;"></div>
 
-		<div class="col-md-6">
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h3 class="panel-title">Message Trends</h3>
-				</div>
-				<div class="panel-body">
-					<p>TBA</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="col-md-12">
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h3 class="panel-title">Message Statistics</h3>
-				</div>
-				<div class="panel-body">
-					<p>TBA</p>
 				</div>
 			</div>
 		</div>
@@ -71,32 +132,50 @@
 	@Styles.Render("~/Content/plugins/dataTables")
 	@Styles.Render("~/Content/plugins/calHeatmap")
 
-    <style>
-        .cal-heatmap-container {
-            margin: 0 auto;
-        }
-        .cal-heatmap-container .subdomain-text {
-            fill: white;
-            font-size:10px;
-        }
-        .cal-heatmap-container .graph-rect ~ .subdomain-text {
-            fill: inherit;
-        }
-        .cal-heatmap-container .graph-label {
-            font-weight:bold;
-        }
-    </style>
+	<style>
+		.cal-heatmap-container {
+			margin: 0 auto;
+		}
+
+			.cal-heatmap-container .subdomain-text {
+				fill: white;
+				font-size: 10px;
+			}
+
+			.cal-heatmap-container .graph-rect ~ .subdomain-text {
+				fill: inherit;
+			}
+
+			.cal-heatmap-container .graph-label {
+				font-weight: bold;
+			}
+
+		.top-message-chart {
+			height: 280px;
+			margin-top: 1rem;
+			width: 100%;
+		}
+
+		.vs-other-chart-pie, .vs-other-chart-line {
+			height: 280px;
+			margin-top: 2rem;
+			width: 100%;
+		}
+	</style>
 
 }
 
 @section Scripts {
-	@*Scripts.Render("~/plugins/chartJs")
-	@Scripts.Render("~/plugins/jqcanvasjs")*@
+	@*Scripts.Render("~/plugins/chartJs")*@
+	@Scripts.Render("~/plugins/jqcanvasjs")
 
 	@Scripts.Render("~/bundles/momentjs")
 	@Scripts.Render("~/bundles/d3v3")
 	@Scripts.Render("~/bundles/plugins/calHeatmap")
 	@Scripts.Render("~/plugins/dataTables")
+	<!-- Because reasons... -->
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
 
 	<script>
 		(function () {
@@ -107,35 +186,76 @@
 
 			var msgTypesURL = "@Url.Action("GetMessageClasses", "Records")";
 			var msgDataURL = "@Url.Action("GetDateGroupedMessages", "Records")";
+			var msgTopUrl = "@Url.Action("GetTopOfMessages", "Records")";
+			var msgCountryUrl = "@Url.Action("GetMessageOccuranceByCountry", "Records")";
 
-		    var messageTypes = [];
+			var messageTypes = [];
 
 
-            // Start loading all the things!
-			LoadOptionsFromUrl(msgTypesURL, $('.calendar-heatmap-messagetype'), "- All -")
-				.then(function (typeData) { messageTypes = typeData; })
-				.then(function () { return GetData(msgDataURL); })
+			// Start loading all the things!
+			var defaultMsgType = "INVALIDRECIP";
+
+			LoadOptionsFromUrl(msgTypesURL, ['.calendar-heatmap-messagetype'], ["- All -"], [defaultMsgType])
+				.then(function (typeData) { messageTypes = typeData; }) // Just incase I need it a gain? might need to do this
+			;
+
+			// Working with date/time grouped messages...
+			GetData(msgDataURL)
+				.then(function (data) { BuildHeatmap(data, 'month'); return data; }) // Return the data so that we can chain some more
+				.then(function (data) { BuildTrafficChart(data); return data; })
 				.catch(function (err) { console.log("Error", err); })
-				.then(function (msgData) { BuildHeatmap(msgData, 'month'); })
+			;
 
+			// Working with data from top message types
+			GetData(msgTopUrl, { topCount: 3 })
+				.then(function (data) { BuildTopMessageChart($('[data-top-chart="1"]'), data[0]); return data; }) // 1st chart
+				.then(function (data) { BuildTopMessageChart($('[data-top-chart="2"]'), data[1]); return data; }) // 2nd chart
+				.then(function (data) { BuildTopMessageChart($('[data-top-chart="3"]'), data[2]); }) // 3rd chart
+				.catch(function (err) { console.log("Error", err); })
+			;
 
+			google.charts.load('current', { 'packages': ['corechart'], mapsApiKey: "AIzaSyA2apvSegRVDBwS0MoVV_8nqkfaYs9CxLA" });
+			google.charts.setOnLoadCallback(function () {
+				GetData(msgCountryUrl)
+					.then(function (data) { BuildGeoChart(data); return data; });
+			});
 
+			//////////////////
+			// Events
+			//////////////////
 
-		    //////////////////
-		    // Events
-		    //////////////////
-
-            // Change the source of the heatmap
+			// Change the source of the heatmap
 			$('.calendar-heatmap-messagetype').on('change', function (e) {
-			    GetData(msgDataURL, { typeFilter: $(this).val() })
+
+				var val = $(this).val();
+
+				GetData(msgDataURL, { typeFilter: val })
                     .catch(function (err) { console.log("Error", err); })
-                    .then(function (msgData) { BuildHeatmap(msgData, calConfig ? calConfig.domain : 'month'); });
+                    .then(function (msgData) {
+                    	BuildHeatmap(msgData, calConfig ? calConfig.domain : 'month');
+                    	BuildTrafficChart(msgData);
+                    });
+
+				GetData(msgVersus, { typeFilter: val })
+                    .catch(function (err) { console.log("Error", err); })
+                    .then(function (data) { BuildVerusChart(data); return data; })
+
 			});
 
 			$('.calendar-heatmap-reset').on('click', function (e) {
-			    e.preventDefault();
-			    BuildHeatmap(calConfig.source, 'month');
+				e.preventDefault();
+				BuildHeatmap(calConfig.source, 'month');
 			});
+
+			//create trigger to resizeEnd event
+			$(window).resize(function () {
+				if (this.resizeTO) clearTimeout(this.resizeTO);
+				this.resizeTO = setTimeout(function () {
+					$(this).trigger('resizeEnd');
+				}, 500);
+			});
+
+
 
 			//////////////////
 			// Methods
@@ -145,82 +265,229 @@
 			var calConfig = null;
 			function BuildHeatmap(data, type) {
 
-			    if (cal != null)
-			        cal = cal.destroy();
+				if (cal != null)
+					cal = cal.destroy();
 
-			    cal = new CalHeatMap();
+				cal = new CalHeatMap();
 
-			    if (!type)
-			        type = 'month';
+				if (!type)
+					type = 'month';
 
-			    var mData = {};
+				var mData = {};
 
-			    var eData = Enumerable.From(data);
-			    var startDate = moment(eData.FirstOrDefault().date).toDate();
-			    var lastDate = moment(eData.LastOrDefault().date).toDate();
+				var eData = Enumerable.From(data);
+				var startDate = moment(eData.FirstOrDefault().date).toDate();
+				var lastDate = moment(eData.LastOrDefault().date).toDate();
 
-                // Fill mData
-			    eData.ForEach(function (x) { mData[moment(x.date).unix()] = x.total; });
+				// Fill mData
+				eData.ForEach(function (x) { mData[moment(x.date).unix()] = x.total; });
 
-                // Default config
-			    calConfig = {
-                    source: data, // So we can reuse the data again and not have to call it again
-			        data: mData,
-			        itemSelector: ".calendar-heatmap",
-			        start: (type == 'month') ? startDate : (calConfig.start || startDate),
-			        minDate: startDate,
-			        maxDate: lastDate,
+				// Default config
+				calConfig = {
+					source: data, // So we can reuse the data again and not have to call it again
+					data: mData,
+					itemSelector: ".calendar-heatmap",
+					start: (type == 'month') ? startDate : (calConfig.start || startDate),
+					minDate: startDate,
+					maxDate: lastDate,
 
-			        cellSize: 30,
+					cellSize: 30,
 
-			        legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
-			        legendColors: ["#ecf5e2", "#232181"],
-			        legendOrientation: "vertical",
-			        legendVerticalPosition: "center",
-			        legendCellSize: 15,
-			        legendMargin: [10, 20, 0, 0],
+					legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
+					legendColors: ["#ecf5e2", "#232181"],
+					legendOrientation: "vertical",
+					legendVerticalPosition: "center",
+					legendCellSize: 15,
+					legendMargin: [10, 20, 0, 0],
 
-			        previousSelector: ".calendar-heatmap-previous",
-			        nextSelector: ".calendar-heatmap-next"
+					previousSelector: ".calendar-heatmap-previous",
+					nextSelector: ".calendar-heatmap-next"
 
-			    };
+				};
 
-			    if (type == "month") {
-			        var upperDomain = eData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total");
-			        calConfig = $.extend(true, calConfig, {
-			            domain: "month",
-			            subDomain: "x_day",
-			            subDomainTextFormat: "%d",
-			            range: 2,
-			            domainGutter: 15,
-			            legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
-			            onClick: function (date, nb) {
-			                //$("#onClick-placeholder").html("You just clicked <br/>on <b>" + date + "</b> <br/>with <b>" + (nb === null ? "unknown" : nb) + "</b> items" );
-			                calConfig.start = moment(date).toDate();
-			                BuildHeatmap(calConfig.source, 'day', true);
-			            }
-			        });
-			    }
+				if (type == "month") {
+					var upperDomain = eData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total");
+					calConfig = $.extend(true, calConfig, {
+						domain: "month",
+						subDomain: "x_day",
+						subDomainTextFormat: "%d",
+						range: 2,
+						domainGutter: 15,
+						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
+						onClick: function (date, nb) {
+							calConfig.start = moment(date).toDate();
+							BuildHeatmap(calConfig.source, 'day', true);
+						}
+					});
+				}
 
-			    if (type == "day") {
-			        var upperDomain = eData.Max("$.total");
-			        calConfig = $.extend(true, calConfig, {
-			            domain: "day",
-			            subDomain: "hour",
-			            subDomainTextFormat: "%H",
-			            rowLimit: 1,
-			            domainGutter: 0,
-			            cellPadding: 5,
-			            range: 7,
-			            verticalOrientation: true,
-			            legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
-			            label: { position: "left", offset: { x: 20, y: 12 }, width: 110 },
-			        });
-			    }
-                
+				if (type == "day") {
+					var upperDomain = eData.Max("$.total");
+					calConfig = $.extend(true, calConfig, {
+						domain: "day",
+						subDomain: "hour",
+						subDomainTextFormat: "%H",
+						rowLimit: 1,
+						domainGutter: 0,
+						cellPadding: 5,
+						cellSize: 20,
+						range: 7,
+						verticalOrientation: true,
+						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
+						label: { position: "left", offset: { x: 20, y: 12 }, width: 110 },
+					});
+				}
+
 				cal.init(calConfig);
 			}
 
+			function BuildTrafficChart(data) {
+
+				if (data == null) return;
+
+				var chartData = Enumerable.From(data)
+					.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) {
+						return { date: key, total: g.Sum("$.total") };
+					})
+					.Select("{ x:moment.utc($.date).toDate(), y:$.total }").ToArray();
+
+				var regData = Enumerable.From(chartData).Select("[moment($.x).unix(), $.y]").ToArray();
+
+				var rDataPoly = regression('polynomial', regData, 2);
+				var rDataLine = regression('linear', regData);
+
+				var polyData = Enumerable.From(rDataPoly.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
+				var lineData = Enumerable.From(rDataLine.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
+
+				var chartConfig = {
+					toolTip: {
+						shared: true  //disable here.
+					},
+					legend: {
+						cursor: "pointer",
+						itemclick: function (e) {
+							e.dataSeries.visible = !(typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible);
+							e.chart.render();
+						}
+					},
+					data: [
+						{
+							type: "splineArea",
+							showInLegend: true,
+							name: "Traffic",
+							dataPoints: chartData
+						},
+						{
+							type: "spline",
+							showInLegend: true,
+							name: "Curve Trend",
+							markerSize: 0,
+							color: "red",
+							dataPoints: polyData
+						},
+						{
+							type: "line",
+							showInLegend: true,
+							name: "Linear Trend",
+							markerSize: 0,
+							color: "black",
+							dataPoints: lineData
+						}
+					]
+				};
+
+				var chart = $('.traffic-chart').CanvasJSChart();
+
+				if (chart) {
+					chart.options.data = chartConfig.data;
+					chart.render();
+				}
+				else
+					$('.traffic-chart').CanvasJSChart(chartConfig);
+
+			}
+
+			function BuildTopMessageChart(elem, data) {
+
+				var messageClass = data.messageClass;
+				var count = +data.count;
+				var total = +data.total;
+				var perc = parseFloat(data.perc).toFixed();
+
+				var chartConfig = {
+					animationEnabled: true,
+					backgroundColor: "transparent",
+					title: {
+						fontColor: "#848484",
+						fontSize: 70,
+						horizontalAlign: "center",
+						text: perc + "%",
+						verticalAlign: "center"
+					},
+					toolTip: {
+						backgroundColor: "#ffffff",
+						borderThickness: 0,
+						cornerRadius: 0,
+						fontColor: "#424242"
+					},
+					data: [
+						{
+							explodeOnClick: false,
+							innerRadius: "90%",
+							radius: "90%",
+							startAngle: 270,
+							type: "doughnut",
+							dataPoints: [
+								{ y: perc, color: "#232181", toolTipContent: messageClass + ": <span>" + count + "</span>" },
+								{ y: (100 - perc), color: "#ededed", toolTipContent: null }
+							]
+						}
+					]
+
+				};
+
+				$(elem).CanvasJSChart(chartConfig);
+				$(elem).next().text(messageClass);
+			}
+
+			function BuildGeoChart(data) {
+
+				var mapData = Enumerable.From(data).Select("[$.country, $.total]").ToArray();
+
+				var dataTbl = new google.visualization.DataTable();
+				dataTbl.addColumn('string', 'Country');
+				dataTbl.addColumn('number', 'Messages');
+				dataTbl.addRows(mapData);
+
+				var options = { colorAxis: { colors: ["#ecf5e2", "#232181"] } };
+				var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+				chart.draw(dataTbl, options);
+
+				// Play with their heart, fill out a little table
+				var tBody = $('.topCountriesTbl').find('tbody');
+				Enumerable.From(data).OrderByDescending("$.total").Take(10).ForEach(function (item, index) {
+					$('<tr/>')
+						.append($('<td/>').text((index + 1)))
+						.append($('<td/>').text(getCountryName(item.country)))
+						.append($('<td/>').text(item.total))
+						.appendTo(tBody);
+				});
+
+				//redraw graph when window resize is completed
+				$(window).on('resizeEnd', function () { chart.draw(dataTbl, options); });
+
+				// Super Sublte "Zoom"-like feature
+				google.visualization.events.addListener(chart, "regionClick", function (e) {
+
+					if (options.region == e.region) {
+						delete options.region;
+					} else
+						options.region = e.region;
+
+					chart.draw(dataTbl, options);
+				});
+
+			}
 
 			//////////////////
 			// Utils
@@ -229,25 +496,31 @@
 			function GetData(url, data) {
 				if (url == undefined) return Promise.reject("No url");
 				return new Promise(function (resolve, reject) {
-					$.ajax({ url: url, dataType: 'json', data: data, type:(data) ? "POST" : "GET" })
+					$.ajax({ url: url, dataType: 'json', data: data, type: (data) ? "POST" : "GET" })
 					.done(function (data) { resolve(data); })
 					.fail(function (err) { reject(err); });
 				});
 			}
 
-			function LoadOptionsFromUrl(url, element, emptyText) {
+			function LoadOptionsFromUrl(url, elements, emptyText, selected) {
 				return GetData(url).then(function (data) {
 
 					data = JSON.parse(data);
+					data.sort();
 
-					if (emptyText)
-						$('<option/>', { text: emptyText, value:"" }).appendTo(element);
+					$.each(elements, function (ei, element) {
 
-					$.each(data, function (i, obj) {
-						$('<option/>', {
-							value: obj,
-							text: obj
-						}).appendTo(element);
+						if (!Array.isArray(emptyText) && emptyText != "")
+							$('<option/>', { text: emptyText, value: "" }).appendTo($(element));
+						else if (Array.isArray(emptyText) && emptyText[ei])
+							$('<option/>', { text: emptyText[ei], value: "" }).appendTo($(element));
+
+						$.each(data, function (i, obj) {
+							$('<option/>', { value: obj, text: obj, })
+								.attr("selected", (obj == selected[ei]) ? "Selected" : false)
+								.appendTo($(element));
+						});
+
 					});
 
 					return data;

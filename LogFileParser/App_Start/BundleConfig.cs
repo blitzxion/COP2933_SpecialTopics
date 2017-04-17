@@ -131,6 +131,7 @@ namespace LogFileParser
 			bundles.Add(new ScriptBundle("~/bundles/utils").Include(
 				"~/Scripts/linq.js",
 				"~/Scripts/color-hash.js",
+				"~/Scripts/regression.js",
 				"~/Scripts/utils.js"));
 
 		}

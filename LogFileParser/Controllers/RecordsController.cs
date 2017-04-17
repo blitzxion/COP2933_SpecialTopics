@@ -94,7 +94,8 @@ namespace LogFileParser.Controllers
 
 				// Group by the results, and send back the date/count
 				var results = messages
-					.GroupBy(x => new {
+					.GroupBy(x => new
+					{
 						x.TimestampUTC.Year,
 						x.TimestampUTC.Month,
 						x.TimestampUTC.Day,
@@ -110,6 +111,106 @@ namespace LogFileParser.Controllers
 
 			return SerializeToJsonFormatted(model);
 		}
+
+		public ActionResult GetTopOfMessages(int topCount, DateTime? startDate, DateTime? endDate)
+		{
+			IQueryable<LogRecord> model = null;
+
+			if (topCount <= 0)
+				topCount = 3;
+
+			using (var context = AppDbContext)
+			{
+				model = context.LogRecords;
+
+				if (startDate.HasValue)
+				{
+					model = model.Where(x => x.TimestampUTC >= startDate);
+					if (endDate.HasValue)
+						model = model.Where(x => x.TimestampUTC <= endDate);
+				}
+
+				var modelCount = model.Count();
+
+				var modelPerc = model
+					.GroupBy(x => x.MessageClass)
+					.Select(x => new { x.Key, Count = x.Count() })
+					.Select(x => new { MessageClass = x.Key, Count = x.Count, Total = modelCount, Perc = ((double)x.Count / modelCount) * 100 }) // No round trips please
+					.OrderByDescending(x => x.Count)
+					.Take(topCount)
+					.ToList();
+
+				return SerializeToJsonFormatted(modelPerc);
+			}
+		}
+
+		public ActionResult GetMessageTypeVsOthers(string typeFilter)
+		{
+			if (string.IsNullOrEmpty(typeFilter)) throw new ArgumentNullException(nameof(typeFilter), "A message type filter must be provided.");
+
+			using (var context = AppDbContext)
+			{
+				IQueryable<LogRecord> messages = context.LogRecords;
+
+				// Group by the results, and send back the date/count
+				var results = messages
+					.GroupBy(x => new
+					{
+						x.TimestampUTC.Year,
+						x.TimestampUTC.Month,
+						x.TimestampUTC.Day,
+						x.MessageClass
+					})
+					.Select(x => new { x.Key, Count = x.Count() });
+
+				// Really, Linq? You're going to do this...
+				var model = results
+					.ToList()
+					.Select(x => new { Date = new DateTime(x.Key.Year, x.Key.Month, x.Key.Day), MessageClass = x.Key.MessageClass, Total = x.Count });
+
+				var targetData = model.Where(x => x.MessageClass.ToLower() == typeFilter.ToLower());
+				var otherData = model.Where(x => x.MessageClass.ToLower() != typeFilter.ToLower())
+					.GroupBy(x => x.Date)
+					.Select(x => new { Date = x.Key, Total = x.Sum(y => y.Total) });
+
+				var targetCount = targetData.Sum(x => x.Total);
+				var otherCount = otherData.Sum(x => x.Total);
+
+				var dataModel = new
+				{
+					Target = typeFilter,
+					TargetCount = targetCount,
+					OtherCount = otherCount,
+					Data = new
+					{
+						Target = targetData.OrderBy(x => x.Date),
+						Others = otherData.OrderBy(x => x.Date)
+					}
+				};
+
+				return SerializeToJsonFormatted(dataModel);
+
+			}
+
+
+		}
+
+		public ActionResult GetMessageOccuranceByCountry()
+		{
+			using (var context = AppDbContext)
+			{
+				var data = context.LogRecords
+					.GroupBy(x => x.Country)
+					.Select(x => new {
+						Country = x.Key,
+						Total = x.Count(),
+					});
+				
+				return SerializeToJsonFormatted(data.ToList());
+			}
+		}
+
+		// Complex Filtering
 
 		public ActionResult GetRecords(DataTableDateFilteredRequest rules)
 		{
