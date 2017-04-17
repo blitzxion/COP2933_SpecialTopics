@@ -210,6 +210,28 @@ namespace LogFileParser.Controllers
 			}
 		}
 
+		public ActionResult Populate()
+		{
+			if (!Request.IsAjaxRequest())
+			{
+				SetRedirectError("This method is not allowed via that protocol.");
+				return RedirectToActionPermanent("Manage");
+			}
+
+			return Json(new { status = "complete", canPopulate = true, path = LogFilePath }, JsonRequestBehavior.AllowGet);
+		}
+
+		public ActionResult Delete()
+		{
+			if (!Request.IsAjaxRequest())
+			{
+				SetRedirectError("This method is not allowed via that protocol.");
+				return RedirectToActionPermanent("Manage");
+			}
+
+			return Json(new { status = "complete", canDelete = true, path = LogFilePath }, JsonRequestBehavior.AllowGet);
+		}
+
 		// Complex Filtering
 
 		public ActionResult GetRecords(DataTableDateFilteredRequest rules)
