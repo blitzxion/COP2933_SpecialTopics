@@ -255,21 +255,8 @@
 
 			hub.client.tickerUpdate = function (record) {
 				if (!chartReady) return;
-
-				//var timestamp = moment.utc(record.TimestampUTC); //.seconds(0); // Should be intresting
-
-				//var found = false;
-
-				//for (var i in liveFeedDataPoints) {					
-				//	if (moment.utc(liveFeedDataPoints[i].x).isSame(timestamp)) {
-				//		liveFeedDataPoints[i].y++;
-				//		found = true;
-				//		break;
-				//	}
-				//}
-
-				//if (!found)
-				//	liveFeedDataPoints.push({ x: timestamp.toDate(), y: 1 });
+				
+				// THINK ABOUT DEFERRING UPDATES AFTER RECEIVING DATA?
 
 				liveFeedDataPoints.push({
 					x: moment.utc(record.Item1).toDate(),
@@ -574,7 +561,7 @@
 						contentFormatter: function (e) {
 							var x = e.entries[0].dataPoint.x;
 							var y = e.entries[0].dataPoint.y;
-							return moment(x).format("MM/DD/YYYY h:m A") + "<br/>Count: <strong>" + y + "</strong>";
+							return moment(x).format("MM/DD/YYYY h:mm A") + "<br/>Count: <strong>" + y + "</strong>";
 						}
 					},
 					data: [{
