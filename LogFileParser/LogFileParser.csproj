@@ -235,6 +235,8 @@
     <Compile Include="Helpers\HtmlHelperExtensions.cs" />
     <Compile Include="Helpers\Infrastructure.cs" />
     <Compile Include="Hubs\LogFileProcessingHub.cs" />
+    <Compile Include="Hubs\LogRecordTicker.cs" />
+    <Compile Include="Hubs\LogRecordTickerHub.cs" />
     <Compile Include="ViewModels\DataTableModels.cs" />
     <Compile Include="ViewModels\RecordsViewModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
