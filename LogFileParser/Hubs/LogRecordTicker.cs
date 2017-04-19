@@ -133,7 +133,7 @@ namespace LogFileParser.Hubs
 								record.Count
 							));
 
-							Task.Delay(150).Wait();
+							Task.Delay(500).Wait();
 						}
 					}
 

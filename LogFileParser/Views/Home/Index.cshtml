@@ -28,6 +28,7 @@
 				</div>
 				<div class="panel-body">
 					<div id="regions_div" style="height:800px; max-height:800px;"></div>
+
 				</div>
 			</div>
 
@@ -203,12 +204,27 @@
 
 			var messageTypes = [];
 
+			// Libraries and Classes
+			var worldMap = new GeoChartBuilder($('#regions_div')[0]);
+			var topTenTbl = new TopTenCountryTable($('.topCountriesTbl'));
+			var liveFeed = new LifeFeedChart($('.life-feed-chart'), {
+				controls: {
+					start: $('.liveFeedStart'),
+					stop: $('.liveFeedStop'),
+					reset: $('.liveFeedReset')
+				}
+			});
+			var heatMap = new HeatMapBuilder('.calendar-heatmap', {
+				previousSelector: ".calendar-heatmap-previous",
+				nextSelector: ".calendar-heatmap-next"
+			});
 
 			// Start loading all the things!
 			var defaultMsgType = "INVALIDRECIP";
 
+			// Load the message types for the dropdown input
 			LoadOptionsFromUrl(msgTypesURL, ['.calendar-heatmap-messagetype'], ["- All -"], [defaultMsgType])
-				.then(function (typeData) { messageTypes = typeData; }) // Just incase I need it a gain? might need to do this
+				.then(function (typeData) { messageTypes = typeData; })
 			;
 
 			// Working with date/time grouped messages...
@@ -226,70 +242,12 @@
 				.catch(function (err) { console.log("Error", err); })
 			;
 
+			// Google is special, we have to wait for them to load before we can do anything with their information
 			google.charts.load('current', { 'packages': ['corechart'], mapsApiKey: "AIzaSyA2apvSegRVDBwS0MoVV_8nqkfaYs9CxLA" });
 			google.charts.setOnLoadCallback(function () {
 				GetData(msgCountryUrl)
-					.then(function (data) { BuildGeoChart(data); return data; });
-			});
-
-			//////////////////
-			// SignalR
-			//////////////////
-
-			var hub = $.connection.logRecordTickerHub;
-
-			hub.client.tickerStarted = function () {
-				console.log('Ticker Started');
-			};
-
-			hub.client.tickerStopped = function () {
-				console.log('Ticker Stopped');
-				if (!chartReady) return;
-				liveFeedDataPoints.length = 0;
-			};
-
-			hub.client.tickerReset = function () {
-				if (!chartReady) return;
-				liveFeedDataPoints.length = 0;
-			};
-
-			hub.client.tickerUpdate = function (record) {
-				if (!chartReady) return;
-				
-				// THINK ABOUT DEFERRING UPDATES AFTER RECEIVING DATA?
-
-				liveFeedDataPoints.push({
-					x: moment.utc(record.Item1).toDate(),
-					y: record.Item2
-				});
-
-				// Force Array size
-				if (liveFeedDataPoints.length > 100)
-					liveFeedDataPoints.shift();
-
-				$('.life-feed-chart').CanvasJSChart().render();
-			};
-
-			$.connection.hub.start().done(function () {
-				console.log('SignalR Started');
-
-				$('.liveFeedStart').on('click', function (e) {
-					e.preventDefault();
-					hub.server.startListening();
-				});
-
-				$('.liveFeedStop').on('click', function (e) {
-					e.preventDefault();
-					hub.server.stopListening();
-				});
-
-				$('.liveFeedReset').on('click', function (e) {
-					e.preventDefault();
-					hub.server.reset();
-				});
-
-				BuildLiveFeedChart();
-
+					.then(function (data) { worldMap.buildMap(data); return data; })
+					.then(function (data) { topTenTbl.buildTable(data); return data; });
 			});
 
 			//////////////////
@@ -310,6 +268,11 @@
 			$('.calendar-heatmap-reset').on('click', function (e) {
 				e.preventDefault();
 				BuildHeatmap(calConfig.source, 'month');
+			});
+
+			$('.topCountryTblItem').on('click', function (e) {
+				e.preventDefault();
+				var countryCode = $(this).data('country-code');
 			});
 
 			//create trigger to resizeEnd event
@@ -513,65 +476,6 @@
 				$(elem).next().text(messageClass);
 			}
 
-			function BuildGeoChart(data) {
-
-				var mapData = Enumerable.From(data).Select("[$.country, $.total]").ToArray();
-
-				var dataTbl = new google.visualization.DataTable();
-				dataTbl.addColumn('string', 'Country');
-				dataTbl.addColumn('number', 'Messages');
-				dataTbl.addRows(mapData);
-
-				var options = { colorAxis: { colors: ["#ecf5e2", "#232181"] } };
-				var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
-				chart.draw(dataTbl, options);
-
-				// Play with their heart, fill out a little table
-				var tBody = $('.topCountriesTbl').find('tbody');
-				Enumerable.From(data).OrderByDescending("$.total").Take(10).ForEach(function (item, index) {
-					$('<tr/>')
-						.append($('<td/>').text((index + 1)))
-						.append($('<td/>').text(getCountryName(item.country)))
-						.append($('<td/>').text(item.total))
-						.appendTo(tBody);
-				});
-
-				//redraw graph when window resize is completed
-				$(window).on('resizeEnd', function () { chart.draw(dataTbl, options); });
-
-				// Super Sublte "Zoom"-like feature
-				google.visualization.events.addListener(chart, "regionClick", function (e) {
-
-					if (options.region == e.region) {
-						delete options.region;
-					} else
-						options.region = e.region;
-
-					chart.draw(dataTbl, options);
-				});
-
-			}
-
-			var chartReady = false;
-			var liveFeedDataPoints = [];
-			function BuildLiveFeedChart()
-			{
-				$('.life-feed-chart').CanvasJSChart({
-					toolTip: {
-						contentFormatter: function (e) {
-							var x = e.entries[0].dataPoint.x;
-							var y = e.entries[0].dataPoint.y;
-							return moment(x).format("MM/DD/YYYY h:mm A") + "<br/>Count: <strong>" + y + "</strong>";
-						}
-					},
-					data: [{
-						type: 'splineArea',
-						dataPoints: liveFeedDataPoints
-					}]
-				});
-				chartReady = true;
-			}
-
 			//////////////////
 			// Utils
 			//////////////////
@@ -610,6 +514,301 @@
 
 				});
 			}
+
+			//////////////////
+			// Classes ( I DONT CARE )
+			//////////////////
+
+			// Class to add some functionality to Google's GeoChart dohicky
+			var GeoChartBuilder = function (mapElement) {
+				var self = this;
+
+				this.element = mapElement;
+
+				this.sourceData = [];
+				this.mapData = null;
+
+				this.mapChart = null;
+				this.mapOptions = {
+					region: "World",
+					colorAxis: {
+						colors: ["#ecf5e2", "#232181"]
+					},
+					tooltip: {
+						isHtml: true
+					}
+				};
+
+				this.defaultRegion = "World";
+				this.currentRegion = null;
+
+				/////////
+				// Init
+				/////////
+
+				self.mapChart = new google.visualization.GeoChart(self.element);
+
+				///////////
+				// Public Functions
+				//////////
+
+				this.loadData = function (data) {
+
+					// Very straight forward, I am not making this to be reusable in the slightest bit, just enough to clean up code
+
+					self.sourceData = data;
+
+					var chartData = Enumerable.From(self.sourceData).Select(function (e) {
+						return [e.country, e.total, BuildTooltipHtml(e.country, e.total)];
+					}).ToArray();
+
+					self.mapData = new google.visualization.DataTable();
+					self.mapData.addColumn('string', 'Country');
+					self.mapData.addColumn('number', 'Messages');
+					self.mapData.addColumn({ type: 'string', role: 'tooltip', 'p': { 'html': true } });
+
+					self.mapData.addRows(chartData);
+
+					self.renderMap();
+				}
+
+				this.getCountryFromCode = function (code) {
+					return getCountryName(code);
+				};
+
+				this.renderMap = function () {
+					self.mapChart.draw(self.mapData, self.mapOptions);
+				};
+
+				this.goToRegion = function (region) {
+					self.currentRegion = region || self.defaultRegion;
+					self.mapOptions.region = self.currentRegion;
+					self.renderMap();
+				};
+
+				//////////
+				// Private Functions
+				//////////
+
+				function buildTooltipHtml(country, value) {
+					return "<strong>" + self.getCountryFromCode(country) + "</strong><br/>Messages: <strong>" + value + "</strong>";
+				}
+
+
+				//////////
+				// Events
+				//////////
+
+
+				//redraw graph when window resize is completed
+				$(window).on('resizeEnd', function () { self.renderMap(); });
+
+				// Click on a region, zoom into it
+				google.visualization.events.addListener(self.mapChart, "regionClick", function (e) {
+					var newRegion = (e.region != self.currentRegion) ? e.region : null;
+					self.goToRegion(newRegion);
+				});
+
+			};
+
+			// Class to display the top ten countries, might as well right?
+			var TopTenCountryTable = function (tblElement) {
+				var self = this;
+
+				this.element = tblElement;
+				this.sourceData = [];
+
+				this.buildTable = function (data) {
+
+					self.sourceData = data;
+
+					var tBody = self.element.find('tbody');
+
+					Enumerable.From(data).OrderByDescending("$.total").Take(10).ForEach(function (item, index) {
+						var tr = $('<tr/>');
+						var a = $('<a/>', { 'data-country-code': item.country }).addClass('topCountryTblItem').text(getCountryName(item.country));
+
+						$('<td/>').text((index + 1)).appendTo(tr);
+						$('<td/>').append(a).end().appendTo(tr);
+						$('<td/>').text(item.total).appendTo(tr);
+
+						tr.appendTo(tBody);
+					});
+
+				};
+
+			};
+
+			// SignalR driven life-feed chart, this encapsulates it all
+			var LifeFeedChart = function (chartElement, config) {
+				var self = this;
+
+				var defaultOptions = {
+					controls: {
+						play: null,
+						stop: null,
+						reset: null,
+					}
+				};
+				var options = $.extend(true, defaultOptions, config);
+				this.element = chartElement;
+				this.hub = $.connection.logRecordTickerHub;
+
+				this.chart = null;
+				this.data = [];
+
+				this.PlayFeed = function () { self.hub.server.startListening(); };
+				this.StopFeed = function () { self.hub.server.stopListening(); };
+				this.ResetFeed = function () { self.hub.server.reset(); };
+
+				this.clearData = function () { self.data.length = 0; };
+				this.addData = function (x, y) { self.data.push({ x: x, y: y }); };
+				this.trimData = function (len) { if (self.data.length > len) self.data.shift(); };
+
+				this.renderChart = function () {
+					if (!self.chart) return;
+					self.chart.render();
+				};
+
+				//////////////
+				// Hub Stuff
+				//////////////
+
+				self.hub.client.tickerStarted = function () {
+					console.log('Live Feed Started');
+				};
+				self.hub.client.tickerStopped = function () {
+					console.log('Live Feed Stopped');
+					self.clearData();
+				};
+				self.hub.client.tickerReset = function () {
+					console.log('Live Feed Reset');
+					self.clearData();
+				};
+				self.hub.client.tickerUpdate = function (record) {
+
+					if (!self.chart) return;
+
+					self.trimData(100);
+					self.addData(moment.utc(record.Item1).toDate(), record.Item2);
+					self.renderChart();
+				};
+
+				$.connection.hub.start().done(function () {
+
+					if (options.controls.play) options.controls.play.on('click', function (e) { e.preventDefault(); self.PlayFeed(); });
+					if (options.controls.stop) options.controls.stop.on('click', function (e) { e.preventDefault(); self.StopFeed(); });
+					if (options.controls.reset) options.controls.reset.on('click', function (e) { e.preventDefault(); self.ResetFeed(); });
+
+					self.chart = self.element.CanvasJSChart({
+						toolTip: {
+							contentFormatter: function (e) {
+								var x = e.entries[0].dataPoint.x;
+								var y = e.entries[0].dataPoint.y;
+								return moment(x).format("MM/DD/YYYY h:mm A") + "<br/>Count: <strong>" + y + "</strong>";
+							}
+						},
+						data: [{
+							type: 'splineArea',
+							dataPoints: []
+						}]
+					});
+
+				});
+
+			};
+
+			// Class to display message counts in an heatmap
+			var HeatMapBuilder = function (element, config) {
+
+				var self = this;
+				this.element = element;
+
+				var defaults = {
+					previousSelector: ".calendar-heatmap-previous",
+					nextSelector: ".calendar-heatmap-next"
+				};
+				var options = $.extend(true, defaults, config);
+
+				this.sourceData = null;
+				this.data = {};
+				this.currentView = "month";
+				this.chart = new CalHeatMap();
+
+				this.chartDefaultOptions = {
+					data: self.data,
+					itemSelector: self.element,
+					cellSize: 30,
+					legendColors: ["#ecf5e2", "#232181"],
+					legendOrientation: "vertical",
+					legendVerticalPosition: "center",
+					legendCellSize: 15,
+					legendMargin: [10, 20, 0, 0],
+
+					// These need to fill out by the data and getOptions
+					start: null,
+					minDate: null,
+					maxDate: null,
+					legend: null,
+
+					previousSelector: options.previousSelector,
+					nextSelector: options.nextSelector
+				};
+
+				this.loadData = function (data) { 
+					var eData = Enumerable.From(data);
+					this.sourceData = eData;
+
+					var startDate = moment(eData.FirstOrDefault().date).toDate();
+					var lastDate = moment(eData.LastOrDefault().date).toDate();
+					eData.ForEach(function (x) { self.data[moment(x.date).unix()] = x.total; });
+
+					self.chartDefaultOptions.start = (this.currentView == 'month') ? startDate : (self.chartDefaultOptions.start || startDate);
+					self.chartDefaultOptions.minDate = startDate;
+					self.chartDefaultOptions.maxDate = lastDate;
+				};
+
+				this.render = function (view) {
+					var viewOptions = getOptions(view);
+					self.chart.init(viewOptions);
+				};
+
+				function getOptions(view) {
+					return $.extend(true, self.chartDefaultOptions, (view != "month") ? getDayOptions() : getMonthOptions());
+				};
+				function getMonthOptions() {
+					var upperDomain = self.sourceData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total");
+					return {
+						domain: "month",
+						subDomain: "x_day",
+						subDomainTextFormat: "%d",
+						range: 2,
+						domainGutter: 15,
+						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
+						onClick: function (date, nb) {
+							self.chartDefaultOptions.start = moment(date).toDate();
+							self.render('day');
+						}
+					};
+				};
+				function getDayOptions() {
+					var upperDomain = self.sourceData.Max("$.total");
+					return {
+						domain: "day",
+						subDomain: "hour",
+						subDomainTextFormat: "%H",
+						rowLimit: 1,
+						domainGutter: 0,
+						cellPadding: 5,
+						cellSize: 20,
+						range: 7,
+						verticalOrientation: true,
+						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
+						label: { position: "left", offset: { x: 20, y: 12 }, width: 110 },
+					}
+				};
+
+			};
 
 		})();
 	</script>
