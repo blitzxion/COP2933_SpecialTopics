@@ -117,8 +117,8 @@ namespace LogFileParser.Hubs
 								x.TimestampUTC.Year,
 								x.TimestampUTC.Month,
 								x.TimestampUTC.Day,
-								x.TimestampUTC.Hour,
-								x.TimestampUTC.Minute
+								//x.TimestampUTC.Hour,
+								//x.TimestampUTC.Minute
 							})
 							.Select(x => new { x.Key, Count = x.Count() });					
 
@@ -129,7 +129,9 @@ namespace LogFileParser.Hubs
 							var record = rEnum.Current;
 
 							BroadcastRecord(new Tuple<DateTime, int>(
-								new DateTime(record.Key.Year, record.Key.Month, record.Key.Day, record.Key.Hour, record.Key.Minute, 0),
+								//new DateTime(record.Key.Year, record.Key.Month, record.Key.Day, record.Key.Hour, record.Key.Minute, 0),
+								//new DateTime(record.Key.Year, record.Key.Month, record.Key.Day, record.Key.Hour, 0, 0),
+								new DateTime(record.Key.Year, record.Key.Month, record.Key.Day, 0, 0, 0),
 								record.Count
 							));
 

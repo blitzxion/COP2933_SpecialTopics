@@ -48,8 +48,7 @@
 								<th>Total Messages</th>
 							</tr>
 						</thead>
-						<tbody>
-						</tbody>
+						<tbody></tbody>
 					</table>
 				</div>
 			</div>
@@ -67,7 +66,7 @@
 						<a href="#" class="btn btn-danger liveFeedStop">Stop</a>
 						<a href="#" class="btn btn-warning liveFeedReset">Reset</a>
 					</div>
-					<hr/>
+					<hr />
 					<div class="life-feed-chart" style="height:380px;"></div>
 				</div>
 			</div>
@@ -180,7 +179,7 @@
 	@Scripts.Render("~/bundles/d3v3")
 	@Scripts.Render("~/bundles/plugins/calHeatmap")
 	@Scripts.Render("~/plugins/dataTables")
-	
+
 	<!-- Because reasons... -->
 	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -201,139 +200,298 @@
 			var msgDataURL = "@Url.Action("GetDateGroupedMessages", "Records")";
 			var msgTopUrl = "@Url.Action("GetTopOfMessages", "Records")";
 			var msgCountryUrl = "@Url.Action("GetMessageOccuranceByCountry", "Records")";
-
+			var defaultMsgType = "INVALIDRECIP";
 			var messageTypes = [];
 
-			// Libraries and Classes
-			var worldMap = new GeoChartBuilder($('#regions_div')[0]);
-			var topTenTbl = new TopTenCountryTable($('.topCountriesTbl'));
-			var liveFeed = new LifeFeedChart($('.life-feed-chart'), {
-				controls: {
-					start: $('.liveFeedStart'),
-					stop: $('.liveFeedStop'),
-					reset: $('.liveFeedReset')
+			//////////////////
+			// Classes ( I DONT CARE )
+			//////////////////
+
+			// Class to add some functionality to Google's GeoChart dohicky
+			var GeoChartBuilder = function (mapElement) {
+				var self = this;
+
+				this.element = mapElement;
+
+				this.sourceData = [];
+				this.mapData = null;
+
+				this.mapChart = null;
+				this.mapOptions = {
+					region: "world",
+					colorAxis: {
+						colors: ["#ecf5e2", "#232181"]
+					},
+					tooltip: {
+						isHtml: true
+					}
+				};
+
+				this.defaultRegion = "world";
+				this.currentRegion = null;
+
+				/////////
+				// Init
+				/////////
+
+				self.mapChart = new google.visualization.GeoChart(self.element);
+
+				///////////
+				// Public Functions
+				//////////
+
+				this.loadData = function (data) {
+
+					// Very straight forward, I am not making this to be reusable in the slightest bit, just enough to clean up code
+
+					self.sourceData = data;
+
+					var chartData = Enumerable.From(self.sourceData).Select(function (e) {
+						return [e.country, e.total, buildTooltipHtml(e.country, e.total)];
+					}).ToArray();
+
+					self.mapData = new google.visualization.DataTable();
+					self.mapData.addColumn('string', 'Country');
+					self.mapData.addColumn('number', 'Messages');
+					self.mapData.addColumn({ type: 'string', role: 'tooltip', 'p': { 'html': true } });
+
+					self.mapData.addRows(chartData);
+
+					self.renderMap();
 				}
-			});
-			var heatMap = new HeatMapBuilder('.calendar-heatmap', {
-				previousSelector: ".calendar-heatmap-previous",
-				nextSelector: ".calendar-heatmap-next"
-			});
 
-			// Start loading all the things!
-			var defaultMsgType = "INVALIDRECIP";
+				this.getCountryFromCode = function (code) {
+					return getCountryName(code);
+				};
 
-			// Load the message types for the dropdown input
-			LoadOptionsFromUrl(msgTypesURL, ['.calendar-heatmap-messagetype'], ["- All -"], [defaultMsgType])
-				.then(function (typeData) { messageTypes = typeData; })
-			;
+				this.renderMap = function (data) {
 
-			// Working with date/time grouped messages...
-			GetData(msgDataURL)
-				.then(function (data) { BuildHeatmap(data, 'month'); return data; }) // Return the data so that we can chain some more
-				.then(function (data) { BuildTrafficChart(data); return data; })
-				.catch(function (err) { console.log("Error", err); })
-			;
+					if (data)
+						self.loadData(data);
 
-			// Working with data from top message types
-			GetData(msgTopUrl, { topCount: 3 })
-				.then(function (data) { BuildTopMessageChart($('[data-top-chart="1"]'), data[0]); return data; }) // 1st chart
-				.then(function (data) { BuildTopMessageChart($('[data-top-chart="2"]'), data[1]); return data; }) // 2nd chart
-				.then(function (data) { BuildTopMessageChart($('[data-top-chart="3"]'), data[2]); }) // 3rd chart
-				.catch(function (err) { console.log("Error", err); })
-			;
+					self.mapChart.draw(self.mapData, self.mapOptions);
+				};
 
-			// Google is special, we have to wait for them to load before we can do anything with their information
-			google.charts.load('current', { 'packages': ['corechart'], mapsApiKey: "AIzaSyA2apvSegRVDBwS0MoVV_8nqkfaYs9CxLA" });
-			google.charts.setOnLoadCallback(function () {
-				GetData(msgCountryUrl)
-					.then(function (data) { worldMap.buildMap(data); return data; })
-					.then(function (data) { topTenTbl.buildTable(data); return data; });
-			});
+				this.goToRegion = function (region) {
+					self.currentRegion = region || self.defaultRegion;
+					self.mapOptions.region = self.currentRegion;
+					self.renderMap();
+				};
 
-			//////////////////
-			// Events
-			//////////////////
+				this.reset = function () {
+					self.goToRegion(self.defaultRegion);
+				};
 
-			// Change the source of the heatmap
-			$('.calendar-heatmap-messagetype').on('change', function (e) {
-				var val = $(this).val();
-				GetData(msgDataURL, { typeFilter: val })
-                    .catch(function (err) { console.log("Error", err); })
-                    .then(function (msgData) {
-                    	BuildHeatmap(msgData, calConfig ? calConfig.domain : 'month');
-                    	BuildTrafficChart(msgData);
-                    });
-			});
+				//////////
+				// Private Functions
+				//////////
 
-			$('.calendar-heatmap-reset').on('click', function (e) {
-				e.preventDefault();
-				BuildHeatmap(calConfig.source, 'month');
-			});
+				function buildTooltipHtml(country, value) {
+					return "<strong>" + self.getCountryFromCode(country) + "</strong><br/>Messages: <strong>" + value + "</strong>";
+				}
 
-			$('.topCountryTblItem').on('click', function (e) {
-				e.preventDefault();
-				var countryCode = $(this).data('country-code');
-			});
+				//////////
+				// Events
+				//////////
 
-			//create trigger to resizeEnd event
-			$(window).resize(function () {
-				if (this.resizeTO) clearTimeout(this.resizeTO);
-				this.resizeTO = setTimeout(function () {
-					$(this).trigger('resizeEnd');
-				}, 500);
-			});
+				//redraw graph when window resize is completed
+				$(window).on('resizeEnd', function () { self.renderMap(); });
 
-			//////////////////
-			// Methods
-			//////////////////
+				// Click on a region, zoom into it
+				google.visualization.events.addListener(self.mapChart, "regionClick", function (e) {
+					var newRegion = (e.region != self.currentRegion) ? e.region : null;
+					self.goToRegion(newRegion);
+				});
 
-			var cal = null;
-			var calConfig = null;
-			function BuildHeatmap(data, type) {
+			};
 
-				if (cal != null)
-					cal = cal.destroy();
+			// Class to display the top ten countries, might as well right?
+			var TopTenCountryTable = function (tblElement) {
+				var self = this;
 
-				cal = new CalHeatMap();
+				this.element = tblElement;
+				this.sourceData = [];
 
-				if (!type)
-					type = 'month';
+				this.buildTable = function (data) {
 
-				var mData = {};
+					self.sourceData = data;
 
-				var eData = Enumerable.From(data);
-				var startDate = moment(eData.FirstOrDefault().date).toDate();
-				var lastDate = moment(eData.LastOrDefault().date).toDate();
+					var tBody = self.element.find('tbody');
 
-				// Fill mData
-				eData.ForEach(function (x) { mData[moment(x.date).unix()] = x.total; });
+					Enumerable.From(data).OrderByDescending("$.total").Take(10).ForEach(function (item, index) {
+						var tr = $('<tr/>');
+						var a = $('<a/>', { 'data-country-code': item.country }).addClass('topCountryTblItem').text(getCountryName(item.country));
 
-				// Default config
-				calConfig = {
-					source: data, // So we can reuse the data again and not have to call it again
-					data: mData,
-					itemSelector: ".calendar-heatmap",
-					start: (type == 'month') ? startDate : (calConfig.start || startDate),
-					minDate: startDate,
-					maxDate: lastDate,
+						$('<td/>').text((index + 1)).appendTo(tr);
+						$('<td/>').append(a).appendTo(tr);
+						$('<td/>').text(item.total).appendTo(tr);
 
+						tr.appendTo(tBody);
+					});
+
+				};
+
+			};
+
+			// SignalR driven life-feed chart, this encapsulates it all
+			var LifeFeedChart = function (chartElement, config) {
+				var self = this;
+
+				var defaultOptions = {
+					controls: {
+						play: null,
+						stop: null,
+						reset: null,
+					}
+				};
+				var options = $.extend(true, {}, defaultOptions, config);
+				this.element = chartElement;
+				this.hub = $.connection.logRecordTickerHub;
+
+				this.chart = null;
+
+				this.PlayFeed = function () { self.hub.server.startListening(); };
+				this.StopFeed = function () { self.hub.server.stopListening(); };
+				this.ResetFeed = function () { self.hub.server.reset(); };
+
+				this.clearData = function () { self.chart.options.data[0].dataPoints.length = 0; };
+				this.addData = function (x, y) { self.chart.options.data[0].dataPoints.push({ x: x, y: y }); };
+				this.trimData = function (len) { if (self.chart.options.data[0].dataPoints.length > len) self.chart.options.data[0].dataPoints.shift(); };
+
+				this.renderChart = function () {
+					if (self.chart == null) { console.log('chart is null'); return; }
+					self.chart.render();
+				};
+
+				//////////////
+				// Hub Stuff
+				//////////////
+
+				options.controls.play.attr('disabled', 'disabled');
+				options.controls.stop.attr('disabled', 'disabled');
+				options.controls.reset.attr('disabled', 'disabled');
+
+				self.hub.client.tickerStarted = function () {
+					console.log('Live Feed Started');
+				};
+				self.hub.client.tickerStopped = function () {
+					console.log('Live Feed Stopped');
+					self.clearData();
+				};
+				self.hub.client.tickerReset = function () {
+					console.log('Live Feed Reset');
+					self.clearData();
+				};
+				self.hub.client.tickerUpdate = function (record) {
+
+					console.log('SignalR data received.');
+
+					if (self.chart == null) return;
+
+					self.trimData(100);
+					self.addData(moment.utc(record.Item1).toDate(), record.Item2);
+					self.renderChart();
+				};
+
+				$.connection.hub.start().done(function () {
+					
+					if (options.controls.play.length > 0) options.controls.play.on('click', function (e) { e.preventDefault(); self.PlayFeed(); });
+					if (options.controls.stop.length > 0) options.controls.stop.on('click', function (e) { e.preventDefault(); self.StopFeed(); });
+					if (options.controls.reset.length > 0) options.controls.reset.on('click', function (e) { e.preventDefault(); self.ResetFeed(); });
+
+					options.controls.play.attr('disabled', false);
+					options.controls.stop.attr('disabled', false);
+					options.controls.reset.attr('disabled', false);
+
+					self.element.CanvasJSChart({
+						toolTip: {
+							contentFormatter: function (e) {
+								var x = e.entries[0].dataPoint.x;
+								var y = e.entries[0].dataPoint.y;
+								return moment(x).format("MM/DD/YYYY h:mm A") + "<br/>Count: <strong>" + y + "</strong>";
+							}
+						},
+						data: [{
+							type: 'splineArea',
+							dataPoints: []
+						}]
+					});
+
+					self.chart = self.element.CanvasJSChart(); // because odd?
+
+					console.log(self.chart);
+
+				});
+
+			};
+
+			// Class to display message counts in an heatmap
+			var HeatMapBuilder = function (element, config) {
+
+				var self = this;
+				this.element = element;
+
+				var defaults = {
+					previousSelector: ".calendar-heatmap-previous",
+					nextSelector: ".calendar-heatmap-next"
+				};
+				var options = $.extend(true, {}, defaults, config);
+
+				this.sourceData = null;
+				this.data = {};
+				this.currentView = "month";
+				this.chart = null; // new CalHeatMap();
+
+				this.chartDefaultOptions = {
+					data: self.data,
+					itemSelector: self.element,
 					cellSize: 30,
-
-					legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
 					legendColors: ["#ecf5e2", "#232181"],
 					legendOrientation: "vertical",
 					legendVerticalPosition: "center",
 					legendCellSize: 15,
 					legendMargin: [10, 20, 0, 0],
 
-					previousSelector: ".calendar-heatmap-previous",
-					nextSelector: ".calendar-heatmap-next"
+					// These need to fill out by the data and getOptions
+					start: null,
+					minDate: null,
+					maxDate: null,
+					legend: null,
 
+					previousSelector: options.previousSelector,
+					nextSelector: options.nextSelector
 				};
 
-				if (type == "month") {
-					var upperDomain = eData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total");
-					calConfig = $.extend(true, calConfig, {
+				this.loadData = function (data) {
+					var eData = Enumerable.From(data);
+					this.sourceData = eData;
+
+					var startDate = moment(eData.FirstOrDefault().date).toDate();
+					var lastDate = moment(eData.LastOrDefault().date).toDate();
+					eData.ForEach(function (x) { self.data[moment(x.date).unix()] = x.total; });
+
+					self.chartDefaultOptions.start = (this.currentView == 'month') ? startDate : (self.chartDefaultOptions.start || startDate);
+					self.chartDefaultOptions.minDate = startDate;
+					self.chartDefaultOptions.maxDate = lastDate;
+				};
+
+				this.render = function (view, data) {
+
+					if (data != null) self.loadData(data);
+					if (self.chart != null) self.chart = self.chart.destroy();
+					if (self.chart == null) self.chart = new CalHeatMap();
+
+					var viewOptions = getOptions(view);
+					self.currentView = view;
+					self.chart.init(viewOptions);
+				};
+
+				function getOptions(view) {
+					return $.extend(true, {}, self.chartDefaultOptions, (view != "month") ? getDayOptions() : getMonthOptions());
+				};
+				function getMonthOptions() {
+					var upperDomain = self.sourceData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total");
+					return {
 						domain: "month",
 						subDomain: "x_day",
 						subDomainTextFormat: "%d",
@@ -341,15 +499,14 @@
 						domainGutter: 15,
 						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
 						onClick: function (date, nb) {
-							calConfig.start = moment(date).toDate();
-							BuildHeatmap(calConfig.source, 'day', true);
+							self.chartDefaultOptions.start = moment(date).toDate();
+							self.render('day');
 						}
-					});
-				}
-
-				if (type == "day") {
-					var upperDomain = eData.Max("$.total");
-					calConfig = $.extend(true, calConfig, {
+					};
+				};
+				function getDayOptions() {
+					var upperDomain = self.sourceData.Max("$.total");
+					return {
 						domain: "day",
 						subDomain: "hour",
 						subDomainTextFormat: "%H",
@@ -361,33 +518,25 @@
 						verticalOrientation: true,
 						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
 						label: { position: "left", offset: { x: 20, y: 12 }, width: 110 },
-					});
-				}
+						onClick: null
+					}
+				};
 
-				cal.init(calConfig);
-			}
+			};
 
-			function BuildTrafficChart(data) {
+			// Class to display the traffic chart with trend lines
+			var TrafficChart = function (element, config) {
+				var self = this;
 
-				if (data == null) return;
+				var defaults = {};
+				var options = $.extend(true, {}, defaults, config);
 
-				var chartData = Enumerable.From(data)
-					.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) {
-						return { date: key, total: g.Sum("$.total") };
-					})
-					.Select("{ x:moment.utc($.date).toDate(), y:$.total }").ToArray();
+				this.element = element;
+				this.data = [];
 
-				var regData = Enumerable.From(chartData).Select("[moment($.x).unix(), $.y]").ToArray();
-
-				var rDataPoly = regression('polynomial', regData, 2);
-				var rDataLine = regression('linear', regData);
-
-				var polyData = Enumerable.From(rDataPoly.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
-				var lineData = Enumerable.From(rDataLine.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
-
-				var chartConfig = {
+				this.chartConfig = {
 					toolTip: {
-						shared: true  //disable here.
+						shared: true
 					},
 					legend: {
 						cursor: "pointer",
@@ -401,7 +550,7 @@
 							type: "splineArea",
 							showInLegend: true,
 							name: "Traffic",
-							dataPoints: chartData
+							dataPoints: []
 						},
 						{
 							type: "spline",
@@ -409,7 +558,7 @@
 							name: "Curve Trend",
 							markerSize: 0,
 							color: "red",
-							dataPoints: polyData
+							dataPoints: []
 						},
 						{
 							type: "line",
@@ -417,37 +566,59 @@
 							name: "Linear Trend",
 							markerSize: 0,
 							color: "black",
-							dataPoints: lineData
+							dataPoints: []
 						}
 					]
 				};
 
-				var chart = $('.traffic-chart').CanvasJSChart();
+				this.render = function (data) {
+					if (data == null) return;
 
-				if (chart) {
-					chart.options.data = chartConfig.data;
-					chart.render();
-				}
-				else
-					$('.traffic-chart').CanvasJSChart(chartConfig);
+					self.data = data;
+
+					var chartData = Enumerable.From(self.data)
+						.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) {
+							return { date: key, total: g.Sum("$.total") };
+						})
+						.Select("{ x:moment.utc($.date).toDate(), y:$.total }").ToArray();
+
+					var regData = Enumerable.From(chartData).Select("[moment($.x).unix(), $.y]").ToArray();
+					var rDataPoly = regression('polynomial', regData, 2);
+					var rDataLine = regression('linear', regData);
+
+					var polyData = Enumerable.From(rDataPoly.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
+					var lineData = Enumerable.From(rDataLine.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
+
+					self.chartConfig.data[0].dataPoints = chartData;
+					self.chartConfig.data[1].dataPoints = polyData;
+					self.chartConfig.data[2].dataPoints = lineData;
+
+					var chart = self.element.CanvasJSChart();
+
+					if (chart) {
+						chart.options.data = self.chartConfig.data;
+						chart.render();
+					}
+					else
+						self.element.CanvasJSChart(self.chartConfig);
+				};
 
 			}
 
-			function BuildTopMessageChart(elem, data) {
+			// Class to diaply the top messages, circle charts
+			var TopMessageChart = function (config) {
+				var self = this;
+				var defaults = {};
+				var options = $.extend(true, {}, defaults, config);
 
-				var messageClass = data.messageClass;
-				var count = +data.count;
-				var total = +data.total;
-				var perc = parseFloat(data.perc).toFixed();
-
-				var chartConfig = {
+				this.chartConfig = {
 					animationEnabled: true,
 					backgroundColor: "transparent",
 					title: {
 						fontColor: "#848484",
 						fontSize: 70,
 						horizontalAlign: "center",
-						text: perc + "%",
+						text: "",
 						verticalAlign: "center"
 					},
 					toolTip: {
@@ -463,18 +634,114 @@
 							radius: "90%",
 							startAngle: 270,
 							type: "doughnut",
-							dataPoints: [
-								{ y: perc, color: "#232181", toolTipContent: messageClass + ": <span>" + count + "</span>" },
-								{ y: (100 - perc), color: "#ededed", toolTipContent: null }
-							]
+							dataPoints: []
 						}
 					]
-
 				};
 
-				$(elem).CanvasJSChart(chartConfig);
-				$(elem).next().text(messageClass);
-			}
+				this.render = function (element, data) {
+					if (!data) return;
+
+					var messageClass = data.messageClass;
+					var count = +data.count;
+					var total = +data.total;
+					var perc = parseFloat(data.perc).toFixed();
+
+					self.chartConfig.title.text = perc + "%";
+					self.chartConfig.data[0].dataPoints[0] = { y: perc, color: "#232181", toolTipContent: messageClass + ": <span>" + count + "</span>" };
+					self.chartConfig.data[0].dataPoints[1] = { y: (100 - perc), color: "#ededed", toolTipContent: null };
+
+					element.CanvasJSChart(self.chartConfig);
+					element.next().text(messageClass);
+
+				};
+			};
+
+
+			//////////////////
+			// Setup
+			//////////////////
+			var worldMap = null;
+			var topTenTbl = null;
+			var liveFeed = new LifeFeedChart($('.life-feed-chart'), {
+				controls: {
+					play: $('.liveFeedStart'),
+					stop: $('.liveFeedStop'),
+					reset: $('.liveFeedReset')
+				}
+			});
+			var heatMap = new HeatMapBuilder('.calendar-heatmap', {
+				previousSelector: ".calendar-heatmap-previous",
+				nextSelector: ".calendar-heatmap-next",
+			});
+			var trafficChart = new TrafficChart($('.traffic-chart'));
+			var topMsgChart = new TopMessageChart();
+
+			// Load the message types for the dropdown input
+			LoadOptionsFromUrl(msgTypesURL, ['.calendar-heatmap-messagetype'], ["- All -"], [defaultMsgType]).then(function (typeData) {
+				messageTypes = typeData;
+			});
+
+			// Working with date/time grouped messages...
+			GetData(msgDataURL).then(function (data) {
+				heatMap.render('month', data);
+				trafficChart.render(data);
+			});
+
+			// Working with data from top message types
+			GetData(msgTopUrl, { topCount: 3 }).then(function (data) {
+				topMsgChart.render($('[data-top-chart="1"]'), data[0]);
+				topMsgChart.render($('[data-top-chart="2"]'), data[1]);
+				topMsgChart.render($('[data-top-chart="3"]'), data[2]);
+			});
+
+			// Google is special, we have to wait for them to load before we can do anything with their information
+			google.charts.load('current', { 'packages': ['corechart'], mapsApiKey: "AIzaSyA2apvSegRVDBwS0MoVV_8nqkfaYs9CxLA" });
+			google.charts.setOnLoadCallback(function () {
+
+				worldMap = new GeoChartBuilder($('#regions_div')[0]);
+				topTenTbl = new TopTenCountryTable($('.topCountriesTbl'));
+
+				GetData(msgCountryUrl).then(function (data) {
+					worldMap.renderMap(data);
+					topTenTbl.buildTable(data);
+				});
+			});
+
+			//////////////////
+			// Events
+			//////////////////
+
+			$('.calendar-heatmap-messagetype').on('change', function (e) {
+				var val = $(this).val();
+				GetData(msgDataURL, { typeFilter: val }).then(function (msgData) {
+					heatMap.render(heatMap.currentView, msgData);
+					trafficChart.render(msgData);
+				});
+			});
+
+			$('.calendar-heatmap-reset').on('click', function (e) {
+				e.preventDefault();
+				heatMap.render('month');
+			});
+
+			$('.topCountriesTbl').on('click', '.topCountryTblItem', function (e) {
+				e.preventDefault();
+				var countryCode = $(this).data('country-code');
+
+				if (countryCode != worldMap.currentRegion)
+					worldMap.goToRegion(countryCode);
+				else
+					worldMap.reset();
+					
+			});
+
+			$(window).resize(function () {
+				if (this.resizeTO) clearTimeout(this.resizeTO);
+				this.resizeTO = setTimeout(function () {
+					$(this).trigger('resizeEnd');
+				}, 500);
+			});
 
 			//////////////////
 			// Utils
@@ -514,301 +781,6 @@
 
 				});
 			}
-
-			//////////////////
-			// Classes ( I DONT CARE )
-			//////////////////
-
-			// Class to add some functionality to Google's GeoChart dohicky
-			var GeoChartBuilder = function (mapElement) {
-				var self = this;
-
-				this.element = mapElement;
-
-				this.sourceData = [];
-				this.mapData = null;
-
-				this.mapChart = null;
-				this.mapOptions = {
-					region: "World",
-					colorAxis: {
-						colors: ["#ecf5e2", "#232181"]
-					},
-					tooltip: {
-						isHtml: true
-					}
-				};
-
-				this.defaultRegion = "World";
-				this.currentRegion = null;
-
-				/////////
-				// Init
-				/////////
-
-				self.mapChart = new google.visualization.GeoChart(self.element);
-
-				///////////
-				// Public Functions
-				//////////
-
-				this.loadData = function (data) {
-
-					// Very straight forward, I am not making this to be reusable in the slightest bit, just enough to clean up code
-
-					self.sourceData = data;
-
-					var chartData = Enumerable.From(self.sourceData).Select(function (e) {
-						return [e.country, e.total, BuildTooltipHtml(e.country, e.total)];
-					}).ToArray();
-
-					self.mapData = new google.visualization.DataTable();
-					self.mapData.addColumn('string', 'Country');
-					self.mapData.addColumn('number', 'Messages');
-					self.mapData.addColumn({ type: 'string', role: 'tooltip', 'p': { 'html': true } });
-
-					self.mapData.addRows(chartData);
-
-					self.renderMap();
-				}
-
-				this.getCountryFromCode = function (code) {
-					return getCountryName(code);
-				};
-
-				this.renderMap = function () {
-					self.mapChart.draw(self.mapData, self.mapOptions);
-				};
-
-				this.goToRegion = function (region) {
-					self.currentRegion = region || self.defaultRegion;
-					self.mapOptions.region = self.currentRegion;
-					self.renderMap();
-				};
-
-				//////////
-				// Private Functions
-				//////////
-
-				function buildTooltipHtml(country, value) {
-					return "<strong>" + self.getCountryFromCode(country) + "</strong><br/>Messages: <strong>" + value + "</strong>";
-				}
-
-
-				//////////
-				// Events
-				//////////
-
-
-				//redraw graph when window resize is completed
-				$(window).on('resizeEnd', function () { self.renderMap(); });
-
-				// Click on a region, zoom into it
-				google.visualization.events.addListener(self.mapChart, "regionClick", function (e) {
-					var newRegion = (e.region != self.currentRegion) ? e.region : null;
-					self.goToRegion(newRegion);
-				});
-
-			};
-
-			// Class to display the top ten countries, might as well right?
-			var TopTenCountryTable = function (tblElement) {
-				var self = this;
-
-				this.element = tblElement;
-				this.sourceData = [];
-
-				this.buildTable = function (data) {
-
-					self.sourceData = data;
-
-					var tBody = self.element.find('tbody');
-
-					Enumerable.From(data).OrderByDescending("$.total").Take(10).ForEach(function (item, index) {
-						var tr = $('<tr/>');
-						var a = $('<a/>', { 'data-country-code': item.country }).addClass('topCountryTblItem').text(getCountryName(item.country));
-
-						$('<td/>').text((index + 1)).appendTo(tr);
-						$('<td/>').append(a).end().appendTo(tr);
-						$('<td/>').text(item.total).appendTo(tr);
-
-						tr.appendTo(tBody);
-					});
-
-				};
-
-			};
-
-			// SignalR driven life-feed chart, this encapsulates it all
-			var LifeFeedChart = function (chartElement, config) {
-				var self = this;
-
-				var defaultOptions = {
-					controls: {
-						play: null,
-						stop: null,
-						reset: null,
-					}
-				};
-				var options = $.extend(true, defaultOptions, config);
-				this.element = chartElement;
-				this.hub = $.connection.logRecordTickerHub;
-
-				this.chart = null;
-				this.data = [];
-
-				this.PlayFeed = function () { self.hub.server.startListening(); };
-				this.StopFeed = function () { self.hub.server.stopListening(); };
-				this.ResetFeed = function () { self.hub.server.reset(); };
-
-				this.clearData = function () { self.data.length = 0; };
-				this.addData = function (x, y) { self.data.push({ x: x, y: y }); };
-				this.trimData = function (len) { if (self.data.length > len) self.data.shift(); };
-
-				this.renderChart = function () {
-					if (!self.chart) return;
-					self.chart.render();
-				};
-
-				//////////////
-				// Hub Stuff
-				//////////////
-
-				self.hub.client.tickerStarted = function () {
-					console.log('Live Feed Started');
-				};
-				self.hub.client.tickerStopped = function () {
-					console.log('Live Feed Stopped');
-					self.clearData();
-				};
-				self.hub.client.tickerReset = function () {
-					console.log('Live Feed Reset');
-					self.clearData();
-				};
-				self.hub.client.tickerUpdate = function (record) {
-
-					if (!self.chart) return;
-
-					self.trimData(100);
-					self.addData(moment.utc(record.Item1).toDate(), record.Item2);
-					self.renderChart();
-				};
-
-				$.connection.hub.start().done(function () {
-
-					if (options.controls.play) options.controls.play.on('click', function (e) { e.preventDefault(); self.PlayFeed(); });
-					if (options.controls.stop) options.controls.stop.on('click', function (e) { e.preventDefault(); self.StopFeed(); });
-					if (options.controls.reset) options.controls.reset.on('click', function (e) { e.preventDefault(); self.ResetFeed(); });
-
-					self.chart = self.element.CanvasJSChart({
-						toolTip: {
-							contentFormatter: function (e) {
-								var x = e.entries[0].dataPoint.x;
-								var y = e.entries[0].dataPoint.y;
-								return moment(x).format("MM/DD/YYYY h:mm A") + "<br/>Count: <strong>" + y + "</strong>";
-							}
-						},
-						data: [{
-							type: 'splineArea',
-							dataPoints: []
-						}]
-					});
-
-				});
-
-			};
-
-			// Class to display message counts in an heatmap
-			var HeatMapBuilder = function (element, config) {
-
-				var self = this;
-				this.element = element;
-
-				var defaults = {
-					previousSelector: ".calendar-heatmap-previous",
-					nextSelector: ".calendar-heatmap-next"
-				};
-				var options = $.extend(true, defaults, config);
-
-				this.sourceData = null;
-				this.data = {};
-				this.currentView = "month";
-				this.chart = new CalHeatMap();
-
-				this.chartDefaultOptions = {
-					data: self.data,
-					itemSelector: self.element,
-					cellSize: 30,
-					legendColors: ["#ecf5e2", "#232181"],
-					legendOrientation: "vertical",
-					legendVerticalPosition: "center",
-					legendCellSize: 15,
-					legendMargin: [10, 20, 0, 0],
-
-					// These need to fill out by the data and getOptions
-					start: null,
-					minDate: null,
-					maxDate: null,
-					legend: null,
-
-					previousSelector: options.previousSelector,
-					nextSelector: options.nextSelector
-				};
-
-				this.loadData = function (data) { 
-					var eData = Enumerable.From(data);
-					this.sourceData = eData;
-
-					var startDate = moment(eData.FirstOrDefault().date).toDate();
-					var lastDate = moment(eData.LastOrDefault().date).toDate();
-					eData.ForEach(function (x) { self.data[moment(x.date).unix()] = x.total; });
-
-					self.chartDefaultOptions.start = (this.currentView == 'month') ? startDate : (self.chartDefaultOptions.start || startDate);
-					self.chartDefaultOptions.minDate = startDate;
-					self.chartDefaultOptions.maxDate = lastDate;
-				};
-
-				this.render = function (view) {
-					var viewOptions = getOptions(view);
-					self.chart.init(viewOptions);
-				};
-
-				function getOptions(view) {
-					return $.extend(true, self.chartDefaultOptions, (view != "month") ? getDayOptions() : getMonthOptions());
-				};
-				function getMonthOptions() {
-					var upperDomain = self.sourceData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total");
-					return {
-						domain: "month",
-						subDomain: "x_day",
-						subDomainTextFormat: "%d",
-						range: 2,
-						domainGutter: 15,
-						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
-						onClick: function (date, nb) {
-							self.chartDefaultOptions.start = moment(date).toDate();
-							self.render('day');
-						}
-					};
-				};
-				function getDayOptions() {
-					var upperDomain = self.sourceData.Max("$.total");
-					return {
-						domain: "day",
-						subDomain: "hour",
-						subDomainTextFormat: "%H",
-						rowLimit: 1,
-						domainGutter: 0,
-						cellPadding: 5,
-						cellSize: 20,
-						range: 7,
-						verticalOrientation: true,
-						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
-						label: { position: "left", offset: { x: 20, y: 12 }, width: 110 },
-					}
-				};
-
-			};
 
 		})();
 	</script>
