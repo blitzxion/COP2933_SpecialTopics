@@ -27,8 +27,8 @@
 					<h3 class="panel-title">Message Appearance by Country</h3>
 				</div>
 				<div class="panel-body">
+                    <div id="regions_date_slider"></div>
 					<div id="regions_div" style="height:800px; max-height:800px;"></div>
-
 				</div>
 			</div>
 
@@ -51,6 +51,9 @@
 						<tbody></tbody>
 					</table>
 				</div>
+                <div class="panel-footer">
+                    <a href="#" class="btn btn-primary btn-block">View All Country Trends</a>
+                </div>
 			</div>
 		</div>
 
@@ -58,7 +61,7 @@
 
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title">Live Feed</h3>
+					<h3 class="panel-title">Live Feed (SignalR)</h3>
 				</div>
 				<div class="panel-body">
 					<div class="btn-group">
@@ -137,6 +140,7 @@
 @section Styles {
 	@Styles.Render("~/Content/plugins/dataTables")
 	@Styles.Render("~/Content/plugins/calHeatmap")
+    @Styles.Render("~/Content/plugins/nouislider");
 
 	<style>
 		.cal-heatmap-container {
@@ -167,6 +171,9 @@
 			margin-top: 2rem;
 			width: 100%;
 		}
+        #regions_date_slider {
+            margin:5px 35px 50px 35px;
+        }
 	</style>
 
 }
@@ -179,6 +186,7 @@
 	@Scripts.Render("~/bundles/d3v3")
 	@Scripts.Render("~/bundles/plugins/calHeatmap")
 	@Scripts.Render("~/plugins/dataTables")
+    @Scripts.Render("~/bundles/plugins/nouislider")
 
 	<!-- Because reasons... -->
 	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -208,13 +216,14 @@
 			//////////////////
 
 			// Class to add some functionality to Google's GeoChart dohicky
-			var GeoChartBuilder = function (mapElement) {
+			var GeoChartBuilder = function (mapElement, sliderElement) {
 				var self = this;
 
 				this.element = mapElement;
 
 				this.sourceData = [];
-				this.mapData = null;
+                this.mapData = null;
+                this.mapSlider = sliderElement;
 
 				this.mapChart = null;
 				this.mapOptions = {
@@ -230,11 +239,42 @@
 				this.defaultRegion = "world";
 				this.currentRegion = null;
 
+                var dateFormat = "MM/DD/YYYY";
+                var dateFormatter = {
+                    to: function (value) { return moment(new Date(value)).format(dateFormat); },
+                    from: function (value) { return moment(value).toDate().getTime(); }
+                };
+
+                var loadingDateData = false;
+                var lastSetDateValues = [];
+                
+
 				/////////
 				// Init
 				/////////
 
-				self.mapChart = new google.visualization.GeoChart(self.element);
+                self.mapChart = new google.visualization.GeoChart(self.element);
+
+                var startDate = moment('2016-11-02').toDate().getTime(),
+                    endDate = moment('2016-12-03').toDate().getTime()
+                noUiSlider.create(self.mapSlider, {
+                    connect: true,
+                    behaviour: 'tap-drag',
+                    tooltips: [dateFormatter, dateFormatter],
+                    range: { min: startDate, max: endDate },
+                    start: [startDate, endDate],
+                    step: 24 * 60 * 60 * 1000, // 1 Day
+                    format: wNumb({ decimals: 0 }),
+                    pips: {
+                        mode: 'steps',
+                        density: 3,
+                        filter: function (value, type) {
+                            var modDay = (5 * 24 * 60 * 60 * 1000); // every 5th day
+                            return ((startDate - value) % modDay) ? 0 : 1; // every 5 days?
+                        },
+                        format: dateFormatter
+                    }
+                });
 
 				///////////
 				// Public Functions
@@ -250,7 +290,7 @@
 						return [e.country, e.total, buildTooltipHtml(e.country, e.total)];
 					}).ToArray();
 
-					self.mapData = new google.visualization.DataTable();
+                    self.mapData = new google.visualization.DataTable();
 					self.mapData.addColumn('string', 'Country');
 					self.mapData.addColumn('number', 'Messages');
 					self.mapData.addColumn({ type: 'string', role: 'tooltip', 'p': { 'html': true } });
@@ -288,7 +328,39 @@
 
 				function buildTooltipHtml(country, value) {
 					return "<strong>" + self.getCountryFromCode(country) + "</strong><br/>Messages: <strong>" + value + "</strong>";
-				}
+                }
+
+               
+                function filterDataByDates(start, end) {
+                    
+                    if (loadingDateData) {
+                        lastSetDateValues = [start, end];
+                        console.log("Map filter throttle", lastSetDateValues);
+                        return;
+                    }
+
+                    loadingDateData = true;
+
+                    var startDate = moment(new Date(+start)).format(),
+                        endDate = moment(new Date(+end)).endOf("day").format();
+
+                    console.log("Filtering Map", start, startDate, end, endDate);
+
+                    GetData(msgCountryUrl, { startDate: startDate, endDate: endDate }).then(function (data) {
+                        console.log("Filtered Map data", data);
+                        worldMap.renderMap(data);
+                        topTenTbl.buildTable(data);
+                        loadingDateData = false;
+                    }).then(function () {
+                        if (lastSetDateValues.length == 2) {
+                            var tmp = lastSetDateValues.slice();
+                            lastSetDateValues.length = 0;
+                            console.log("Map filter throrttled recovery", tmp);
+                            filterDataByDates(tmp[0], tmp[1]);
+                        }
+                    });
+
+                }
 
 				//////////
 				// Events
@@ -301,7 +373,12 @@
 				google.visualization.events.addListener(self.mapChart, "regionClick", function (e) {
 					var newRegion = (e.region != self.currentRegion) ? e.region : null;
 					self.goToRegion(newRegion);
-				});
+                });
+
+                // Slider Events
+                self.mapSlider.noUiSlider.on('set', function (values, handle, unencoded, tap, position) {
+                    filterDataByDates(values[0], values[1]);
+                });
 
 			};
 
@@ -316,7 +393,9 @@
 
 					self.sourceData = data;
 
-					var tBody = self.element.find('tbody');
+                    var tBody = self.element.find('tbody');
+
+                    tBody.empty();
 
 					Enumerable.From(data).OrderByDescending("$.total").Take(10).ForEach(function (item, index) {
 						var tr = $('<tr/>');
@@ -699,7 +778,7 @@
 			google.charts.load('current', { 'packages': ['corechart'], mapsApiKey: "AIzaSyA2apvSegRVDBwS0MoVV_8nqkfaYs9CxLA" });
 			google.charts.setOnLoadCallback(function () {
 
-				worldMap = new GeoChartBuilder($('#regions_div')[0]);
+                worldMap = new GeoChartBuilder($('#regions_div')[0], $('#regions_date_slider')[0]);
 				topTenTbl = new TopTenCountryTable($('.topCountriesTbl'));
 
 				GetData(msgCountryUrl).then(function (data) {

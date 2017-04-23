@@ -1,0 +1,89 @@
+﻿@model CountryMetrics
+@{
+    ViewBag.Title = "Country Trends";
+}
+
+<div class="wrapper wrapper-content animated fadeInRight">
+
+    <div class="row">
+
+        <div class="col-md-12">
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Top 10 Country Trends</h3>
+                </div>
+                <div class="panel-body">
+
+                    <div class="row">
+                        
+                        @foreach(var country in Model.Data.OrderByDescending(x => x.TotalMessagesSent).Take(10))
+                        {
+                            <div class="country-chart-container col-md-6" style="margin-bottom:50px">
+                                <h2>@country.CountryName</h2>
+                                <h3>@country.MostSentMessage.Total</h3>
+                                <a href="#">
+                                    <div class="country-trend-chart" style="height:100px;" data-chart-data="@Json.Encode(country.FlattenData)">
+                                        @Html.Partial("_Loading")
+                                    </div>
+                                </a>
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Styles {
+    @Styles.Render("~/Content/plugins/dataTables")
+}
+
+@section Scripts {
+    @Scripts.Render("~/plugins/jqcanvasjs")
+    @Scripts.Render("~/bundles/momentjs")
+    @Scripts.Render("~/plugins/dataTables")
+
+    <script>
+        (function () {
+            
+            $('.country-chart-container').each(function () {
+
+                var chartElem = $(this).find('.country-trend-chart');
+
+                var chartData = Enumerable.From(chartElem.data('chart-data')).Select(function (e) {
+                    var date = new Date(parseInt(e.Date.substr(6)));
+                    var total = e.Total;
+                    return { x: date, y: total };
+                })
+
+                var chartDataArray = chartData.ToArray();
+
+                if (chartDataArray.length > 0) // Sanity
+                    chartDataArray[chartDataArray.length - 1].markerSize = 10;
+
+                var axisConfig = { tickLength: 0, margin: 0, lineThickness: 0, gridThickness: 0, valueFormatString: " " };
+
+                chartElem.CanvasJSChart({
+                    interactivityEnabled: false,
+                    axisY: axisConfig,
+                    axisX: axisConfig,
+                    data: [{
+                        type: 'line',
+                        markerSize:0,
+                        dataPoints: chartDataArray
+                    }]
+                });
+
+            });
+
+        })();
+    </script>
+
+}

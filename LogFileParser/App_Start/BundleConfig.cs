@@ -116,8 +116,16 @@ namespace LogFileParser
 			bundles.Add(new StyleBundle("~/Content/plugins/calHeatmap").Include(
 				"~/Content/plugins/calHeatmap/cal-heatmap.css"));
 
-			// CSS style (bootstrap/inspinia)
-			bundles.Add(new StyleBundle("~/Content/css").Include(
+            // noUiSlider
+            bundles.Add(new ScriptBundle("~/bundles/plugins/nouislider").Include(
+                "~/Scripts/plugins/nouislider/wNumb.js",
+                "~/Scripts/plugins/nouislider/nouislider.js"));
+
+            bundles.Add(new StyleBundle("~/Content/plugins/nouislider").Include(
+                "~/Content/plugins/nouislider/nouislider.css"));
+
+            // CSS style (bootstrap/inspinia)
+            bundles.Add(new StyleBundle("~/Content/css").Include(
 				"~/Content/bootstrap.min.css",
 				"~/Content/animate.css",
 				"~/Content/spinner.css",

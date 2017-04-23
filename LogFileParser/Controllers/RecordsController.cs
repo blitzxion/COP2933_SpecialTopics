@@ -195,18 +195,28 @@ namespace LogFileParser.Controllers
 
 		}
 
-		public ActionResult GetMessageOccuranceByCountry()
+		public ActionResult GetMessageOccuranceByCountry(DateTime? startDate, DateTime? endDate)
 		{
 			using (var context = AppDbContext)
 			{
-				var data = context.LogRecords
-					.GroupBy(x => x.Country)
-					.Select(x => new {
-						Country = x.Key,
-						Total = x.Count(),
-					});
+                IQueryable<LogRecord> data = context.LogRecords;
+
+                if(startDate.HasValue)
+                {
+                    data = data.Where(x => x.TimestampUTC >= startDate.Value);
+                    if(endDate.HasValue)
+                    {
+                        data = data.Where(x => x.TimestampUTC <= endDate.Value);
+                    }
+                }
+
+				var results = data.GroupBy(x => x.Country)
+				    .Select(x => new {
+					    Country = x.Key,
+					    Total = x.Count(),
+				    });
 				
-				return SerializeToJsonFormatted(data.ToList());
+				return SerializeToJsonFormatted(results.ToList());
 			}
 		}
 

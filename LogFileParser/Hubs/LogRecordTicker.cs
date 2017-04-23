@@ -37,9 +37,9 @@ namespace LogFileParser.Hubs
 		private readonly object _tickerStateLock = new object();
 		private readonly object _tickerRecordLock = new object();
 
-		private readonly TimeSpan _updateInterval = TimeSpan.FromMilliseconds(2000);
+		//private readonly TimeSpan _updateInterval = TimeSpan.FromMilliseconds(2000);
+		//private Timer _timer;
 
-		private Timer _timer;
 		private volatile bool _emittingRecords;
 		private volatile TickerState _tickerState;
 
@@ -61,7 +61,8 @@ namespace LogFileParser.Hubs
 			{
 				if(TickerState != TickerState.Open)
 				{
-					_timer = new Timer(TryEmitRecords, null, _updateInterval, _updateInterval);
+                    //_timer = new Timer(TryEmitRecords, null, _updateInterval, _updateInterval);
+                    TryEmitRecords(null);
 
 					TickerState = TickerState.Open;
 
@@ -77,8 +78,7 @@ namespace LogFileParser.Hubs
 			{
 				if(TickerState == TickerState.Open)
 				{
-					if (_timer != null)
-						_timer.Dispose();
+					//if (_timer != null) _timer.Dispose();
 
 					TickerState = TickerState.Closed;
 
@@ -135,11 +135,15 @@ namespace LogFileParser.Hubs
 								record.Count
 							));
 
-							Task.Delay(500).Wait();
+							Task.Delay(750).Wait();
 						}
 					}
 
-					_emittingRecords = false;
+                    TickerState = TickerState.Closed;
+
+                    BroadcastTickerStateChange(TickerState.Closed);
+
+                    _emittingRecords = false;
 				}
 			}
 		}
