@@ -11,17 +11,19 @@
 
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Top 10 Country Trends</h3>
+                    <h3 class="panel-title">Top 5 Country Messaging Trends</h3>
                 </div>
                 <div class="panel-body">
 
                     <div class="row">
                         
-                        @foreach(var country in Model.Data.OrderByDescending(x => x.TotalMessagesSent).Take(10))
+                        <div class="col-md-1">&nbsp;</div>
+
+                        @foreach(var country in Model.Data.OrderByDescending(x => x.TotalMessagesSent).Take(5))
                         {
-                            <div class="country-chart-container col-md-6" style="margin-bottom:50px">
-                                <h2>@country.CountryName</h2>
-                                <h3>@country.MostSentMessage.Total</h3>
+                            <div class="country-chart-container col-md-2" style="margin-bottom:50px">
+                                <h2><a href="@Url.Action("details", "Countries", new { countryCode = country.CountryCode })">@country.CountryName</a></h2>
+                                <h3>@country.MostSentMessage.Total <small>2016</small></h3>
                                 <a href="#">
                                     <div class="country-trend-chart" style="height:100px;" data-chart-data="@Json.Encode(country.FlattenData)">
                                         @Html.Partial("_Loading")
@@ -61,7 +63,12 @@
                     var date = new Date(parseInt(e.Date.substr(6)));
                     var total = e.Total;
                     return { x: date, y: total };
-                })
+                });
+
+                var regData = Enumerable.From(chartData).Select("[moment($.x).unix(), $.y]").ToArray();
+                var rDataLine = regression('linear', regData);
+                var lineData = Enumerable.From(rDataLine.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
+
 
                 var chartDataArray = chartData.ToArray();
 
@@ -74,11 +81,19 @@
                     interactivityEnabled: false,
                     axisY: axisConfig,
                     axisX: axisConfig,
-                    data: [{
-                        type: 'line',
-                        markerSize:0,
-                        dataPoints: chartDataArray
-                    }]
+                    data: [
+                        {
+                            type: 'line',
+                            markerSize:0,
+                            dataPoints: chartDataArray
+                        },
+                        {
+                            type: "line",
+                            markerSize: 0,
+                            color: "gray",
+                            dataPoints: lineData
+                        }
+                    ]
                 });
 
             });

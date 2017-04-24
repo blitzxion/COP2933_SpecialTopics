@@ -453,6 +453,7 @@
     <Content Include="Views\Analytics\Index.cshtml" />
     <Content Include="Views\Shared\_TopNavBar2.cshtml" />
     <Content Include="Views\Countries\Index.cshtml" />
+    <Content Include="Views\Countries\Details.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

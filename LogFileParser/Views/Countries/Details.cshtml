@@ -1,0 +1,263 @@
+﻿@model CountryMetricDetails
+@{
+    ViewBag.Title = $"{Model.CountryName} Details";
+}
+
+<div class="wrapper wrapper-content animated fadeInRight">
+
+    <h1>@Model.CountryName</h1>
+
+    <div class="row">
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Details</h3>
+                </div>
+                <table class="table table-condensed table-striped table-hover">
+                    <tbody>
+                        <tr><td>Country Code</td><td>@Model.CountryCode</td></tr>
+                        <tr><td>Total Messages Sent</td><td>@Model.TotalMessagesSent</td></tr>
+                        <tr><td>Average Messages Sent</td><td>@Model.AverageMessagesSent</td></tr>
+                        <tr><td>Message Stnd. Deviation</td><td>@Model.MessageStdDev</td></tr>
+                        <tr><td>Most Sent Message</td><td>'@Model.MostSentMessage.MessageClass' (@Model.MostSentMessage.Total)</td></tr>
+                        <tr><td>Least Sent Message</td><td>'@Model.LeastSentMessage.MessageClass' (@Model.LeastSentMessage.Total)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Overall Messaging Trends</h3>
+                </div>
+
+                <div class="tabs-container">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#tab-1">Chart</a></li>
+                        <li><a data-toggle="tab" href="#tab-2">Data</a></li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div id="tab-1" class="tab-pane active">
+                            <div class="panel-body">
+                                <div class="country-chart-container col-md-12" style="margin-bottom:50px">
+                                    <div class="country-trend-chart" style="height:500px;" data-chart-data="@Json.Encode(Model.FlattenData)">
+                                        @Html.Partial("_Loading")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tab-2" class="tab-pane">
+                            <table class="datatable table table-condensed table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach(var item in Model.FlattenData)
+                                    {
+                                        <tr>
+                                            <td>@item.Date.Value.ToShortDateString()</td>
+                                            <td>@item.Total</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Messages Sent by @Model.CountryName</h3>
+                </div>
+                
+                <div class="tabs-container">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#tab-21">Chart</a></li>
+                        <li><a data-toggle="tab" href="#tab-22">Data</a></li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div id="tab-21" class="tab-pane active">
+                            <div class="panel-body">
+                                <div class="messages-chart" style="height:500px;" data-chart-data="@Json.Encode(Model.Data)">
+                                    @Html.Partial("_Loading")
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tab-22" class="tab-pane">
+                            <table class="datatable table table-condensed table-hover table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Message Class</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach(var item in Model.Data)
+                                    {
+                                        <tr>
+                                            <td>@item.Date.Value.ToShortDateString()</td>
+                                            <td>@item.MessageClass</td>
+                                            <td>@item.Total</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Styles {
+    @Styles.Render("~/Content/plugins/dataTables")
+}
+
+@section Scripts {
+    @Scripts.Render("~/plugins/jqcanvasjs")
+    @Scripts.Render("~/bundles/momentjs")
+    @Scripts.Render("~/plugins/dataTables")
+
+    <script>
+        (function () {
+
+            
+            function LoadCountryChart()
+            {
+                var chartElem = $('.country-chart-container').find('.country-trend-chart');
+
+                var chartData = Enumerable.From(chartElem.data('chart-data')).Select(function (e) {
+                    var date = new Date(parseInt(e.Date.substr(6)));
+                    var total = e.Total;
+                    return { x: date, y: total };
+                });
+
+                var regData = Enumerable.From(chartData).Select("[moment($.x).unix(), $.y]").ToArray();
+                var rDataLine = regression('linear', regData);
+                var lineData = Enumerable.From(rDataLine.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
+
+
+                var chartDataArray = chartData.ToArray();
+
+                if (chartDataArray.length > 0) // Sanity
+                    chartDataArray[chartDataArray.length - 1].markerSize = 10;
+
+                var axisConfig = { tickLength: 0, margin: 0, lineThickness: 0, gridThickness: 0, valueFormatString: " " };
+
+                chartElem.CanvasJSChart({
+                    //axisY: axisConfig,
+                    //axisX: axisConfig,
+                    data: [
+                        {
+                            type: 'line',
+                            //markerSize: 0,
+                            dataPoints: chartDataArray
+                        },
+                        {
+                            type: "line",
+                            markerSize: 0,
+                            color: "gray",
+                            dataPoints: lineData
+                        }
+                    ]
+                });
+            }
+
+            function LoadMessageChart()
+            {
+                var chartElem = $('.messages-chart');
+
+                var chartDataPrep = Enumerable.From(chartElem.data('chart-data')).GroupBy("moment($.Date).format()", null, function (key, g) {
+
+                    var points = [];
+                    var thisDate = moment(key).format();
+                    var pointAverage = g.Average("$.Total");
+
+                    var otherPointsTotal = g.Where(function (e) { return e.Total < pointAverage }).Sum("$.Total");
+                    points = g.Where(function (e) { return e.Total >= pointAverage }).ToArray();
+
+                    for (var i = 0; i < points.length; i++) points[i].Date = thisDate;
+
+                    if (otherPointsTotal > 0)
+                        points.push({
+                            Date: thisDate,
+                            MessageClass: "OTHER",
+                            Total: otherPointsTotal
+                        });
+
+                    //console.log("Date: ", key);
+                    //console.log("Group Source:", g);
+                    //console.log("Average", pointAverage);
+                    //console.log("Top:", points);
+                    //console.log("Others:", otherPointsTotal);
+                    //console.log("==============================");
+
+                    return points
+                });
+
+                var cd = chartDataPrep.SelectMany("$").OrderBy("$.Date");
+                
+                var chartData = cd.GroupBy("$.MessageClass", null, function (key, g) {
+
+                    return {
+                        type: "column",
+                        showInLegend: "true",
+                        legendText: key,
+                        dataPoints: g.OrderBy("moment($.Date).toDate()").Select(function (e) {
+                            return {
+                                x: moment(e.Date).toDate(),
+                                y: e.Total,
+                                name: key
+                            };
+                        }).ToArray()
+                    }
+                    
+                });
+
+                var data = chartData.ToArray();
+
+                console.log(data);
+
+                chartElem.CanvasJSChart({
+                    toolTip: {
+                        content: "{name}: {y}"
+                    },
+                    data: data
+                });
+
+            }
+
+
+            LoadCountryChart();
+            LoadMessageChart();
+
+            $('.datatable').each(function () {
+                $(this).DataTable();
+            });
+
+
+
+
+        })();
+    </script >
+    }

@@ -88,6 +88,15 @@ namespace LogFileParser.ViewModels
             }
         }
 
+        public double MessageStdDev
+        {
+            get
+            {
+                if (!FlattenData.Any()) return 0;
+                return FlattenData.Select(m => (double)m.Total).StdDev();
+            }
+        }
+
         public CountryMessageDetails MostSentMessage
         {
             get

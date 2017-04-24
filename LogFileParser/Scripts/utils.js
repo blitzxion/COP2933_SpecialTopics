@@ -19,6 +19,23 @@ $.fn.hasData = function (key) {
 	return (typeof $(this).data(key) != 'undefined');
 }
 
+function DatesBetween(dates) {
+    var minDate = new Date(dates[0]).getTime(),
+        maxDate = new Date(dates[dates.length - 1]).getTime();
+
+    var newDates = [],
+        currentDate = minDate,
+        d;
+
+    while (currentDate <= maxDate) {
+        d = new Date(currentDate);
+        newDates.push((d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear());
+        currentDate += (24 * 60 * 60 * 1000); // add one day
+    }
+
+    return newDates;
+}
+
 var isoCountries = {
     'AD': 'Andorra',
     'AE': 'United Arab Emirates',

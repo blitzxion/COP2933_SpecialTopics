@@ -336,7 +336,26 @@ namespace LogFileParser
 		{
 			return source.OrderBy(x => Guid.NewGuid());
 		}
-	}
+
+        public static double StdDev(this IEnumerable<double> values)
+        {
+            double ret = 0;
+            int count = values.Count();
+            if (count > 1)
+            {
+                //Compute the Average
+                double avg = values.Average();
+
+                //Perform the Sum of (value-avg)^2
+                double sum = values.Sum(d => Math.Pow((d - avg), 2));
+
+                //Put it all together
+                ret = Math.Sqrt(sum / count);
+            }
+            return ret;
+        }
+
+    }
 
 	public static class PathUtils
 	{

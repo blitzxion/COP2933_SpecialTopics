@@ -16,11 +16,40 @@ namespace LogFileParser.Controllers
         {
             // Just group all countries up by name, date (day)
             CountryMetrics model = null;
+            using (var context = AppDbContext)
+            {
+                var results = GetCountryData(context);
+                model = new CountryMetrics(results);
+            }
+            return View(model);
+        }
 
+        public ActionResult Details(string countryCode)
+        {
+            // Just group all countries up by name, date (day)
+            CountryMetricDetails model = null;
             using (var context = AppDbContext)
             {
 
-                var data = context.LogRecords.GroupBy(x => new
+                var results = GetCountryData(context, countryCode);
+                model = results.FirstOrDefault();
+            }
+            return View(model);
+        }
+
+
+
+        // Helpers
+
+        public IEnumerable<CountryMetricDetails> GetCountryData(LogDbContext context, string countryCodeFilter = null)
+        {
+            IQueryable<LogRecord> data = context.LogRecords;
+
+            if (!string.IsNullOrEmpty(countryCodeFilter))
+                data = data.Where(x => x.Country.ToLower() == countryCodeFilter.ToLower());
+
+            var groupedData = data
+                .GroupBy(x => new
                 {
                     x.Country,
                     x.MessageClass,
@@ -30,38 +59,30 @@ namespace LogFileParser.Controllers
                 })
                 .Select(x => new { x.Key, Total = x.Count() });
 
-                var results = data
-                    .ToList() // DB CALL HERE!
-                    .Select(x => new
+            var results = groupedData
+                .ToList() // DB Call
+                .Select(x => new
+                {
+                    Country = x.Key.Country,
+                    Date = new DateTime(x.Key.Year, x.Key.Month, x.Key.Day, 0, 0, 0), // Grouped by Day
+                    MessageClass = x.Key.MessageClass,
+                    Total = x.Total,
+                })
+                .GroupBy(x => x.Country) // Group by Country to get a child list of messages/totals
+                .Select(x => new CountryMetricDetails()
+                {
+                    CountryCode = x.Key,
+                    CountryName = CountryCodes.GetCountryNameFromCode(x.Key),
+                    Data = x.OrderBy(d => d.Date).Select(y => new CountryMessageDetails()
                     {
-                        Country = x.Key.Country,
-                        Date = new DateTime(x.Key.Year, x.Key.Month, x.Key.Day, 0, 0, 0), // Grouped by Day
-                        MessageClass = x.Key.MessageClass,
-                        Total = x.Total,
+                        Date = y.Date,
+                        MessageClass = y.MessageClass,
+                        Total = y.Total
                     })
-                    .GroupBy(x => x.Country) // Group by Country to get a child list of messages/totals
-                    .Select(x => new CountryMetricDetails()
-                    {
-                        CountryCode = x.Key,
-                        CountryName = CountryCodes.GetCountryNameFromCode(x.Key),
-                        Data = x.OrderBy(d => d.Date).Select(y => new CountryMessageDetails()
-                        {
-                            Date = y.Date,
-                            MessageClass = y.MessageClass,
-                            Total = y.Total
-                        })
-                    });
+                });
 
-                model = new CountryMetrics(results);
+            return results;
 
-            }
-
-            return View(model);
-        }
-
-        public ActionResult Details(string country)
-        {
-            return View();
         }
 
     }
