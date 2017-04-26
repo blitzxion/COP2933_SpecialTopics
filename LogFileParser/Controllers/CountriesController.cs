@@ -18,7 +18,7 @@ namespace LogFileParser.Controllers
             CountryMetrics model = null;
             using (var context = AppDbContext)
             {
-                var results = GetCountryData(context);
+                var results = GetCountriesData(context);
                 model = new CountryMetrics(results);
             }
             return View(model);
@@ -31,17 +31,29 @@ namespace LogFileParser.Controllers
             using (var context = AppDbContext)
             {
 
-                var results = GetCountryData(context, countryCode);
+                var results = GetCountriesData(context, countryCode);
                 model = results.FirstOrDefault();
             }
             return View(model);
         }
 
+        // JSON
 
+        public ActionResult GetCountryData(string countryCode)
+        {
+            CountryMetricDetails model = null;
+            using (var context = AppDbContext)
+            {
+                var results = GetCountriesData(context, countryCode);
+                model = results.FirstOrDefault();
+            }
+
+            return SerializeToJsonFormatted(model);
+        }
 
         // Helpers
 
-        public IEnumerable<CountryMetricDetails> GetCountryData(LogDbContext context, string countryCodeFilter = null)
+        private IEnumerable<CountryMetricDetails> GetCountriesData(LogDbContext context, string countryCodeFilter = null)
         {
             IQueryable<LogRecord> data = context.LogRecords;
 

@@ -41,6 +41,39 @@
 
     </div>
 
+    <div class="row">
+
+        <div class="col-md-12">
+            <div class="form-horizontal">
+                <div class="input-group">
+                    <span class="input-group-addon">
+                        <i class="fa fa-globe" aria-hidden="true"></i>
+                    </span>
+                    <select type="text" class="country_select form-control input-lg">
+                        <option>-- Select Country --</option>
+                    </select>
+                </div>
+            </div>
+
+            </hr>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Results</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="country-select-chart-container" style="margin-bottom:50px">
+                        <div class="country-select-trend-chart text-center" style="height:300px;">
+                            @Html.Partial("_Loading")
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
 @section Styles {
@@ -54,14 +87,15 @@
 
     <script>
         (function () {
-            
-            $('.country-chart-container').each(function () {
 
-                var chartElem = $(this).find('.country-trend-chart');
+            function LoadChartForCountry(chartElem, data) {
 
-                var chartData = Enumerable.From(chartElem.data('chart-data')).Select(function (e) {
-                    var date = new Date(parseInt(e.Date.substr(6)));
-                    var total = e.Total;
+                var chartData = Enumerable.From(data).Select(function (e) {
+                    var dataDate = e.Date || e.date;
+                    var dataTotal = e.Total || e.total;
+
+                    var date = moment(dataDate).toDate(); // new Date(parseInt(dataDate.substr(6)));
+                    var total = dataTotal;
                     return { x: date, y: total };
                 });
 
@@ -77,14 +111,14 @@
 
                 var axisConfig = { tickLength: 0, margin: 0, lineThickness: 0, gridThickness: 0, valueFormatString: " " };
 
-                chartElem.CanvasJSChart({
+                var chartConfig = {
                     interactivityEnabled: false,
                     axisY: axisConfig,
                     axisX: axisConfig,
                     data: [
                         {
                             type: 'line',
-                            markerSize:0,
+                            markerSize: 0,
                             dataPoints: chartDataArray
                         },
                         {
@@ -94,9 +128,93 @@
                             dataPoints: lineData
                         }
                     ]
-                });
+                };
 
+                var chart = chartElem.CanvasJSChart();
+
+                if (chart) {
+                    chart.options.data = chartConfig.data;
+                    chart.render();
+                } else {
+                    chartElem.CanvasJSChart(chartConfig);
+                }
+
+            }
+
+            // Top few countries
+            $('.country-chart-container').each(function () {
+                var chartElem = $(this).find('.country-trend-chart');
+                LoadChartForCountry(chartElem, chartElem.data('chart-data'));
             });
+
+            // Fill out the country select input
+            @*Since I already have the model with the countries in it...*@
+            var knownCountries = @Html.Raw(Json.Encode(Model.Data.Select(x => new { x.CountryCode, x.CountryName, url = Url.Action("details", new { countryCode = x.CountryCode }) }).OrderBy(x => x.CountryName)));
+            $.each(knownCountries, function (i, k) {
+                $('<option/>', { value: k.CountryCode, text: k.CountryName, "data-country-url": k.url }).appendTo($('.country_select'));
+            });
+
+            var getCountriesDetailsUrl = "@Url.Action("GetCountryData")";
+            $('.country_select').on('change', function (e) {
+                var ele = $(this);
+                var countryCode = ele.val();
+                var countryDetailsURL = ele.find(':selected').data('country-url');
+                var chartEle = $('.country-select-trend-chart');
+
+                if (countryCode == "") return;
+
+                GetData(getCountriesDetailsUrl, { countryCode: countryCode }).then(function (data) {
+                    
+                    $('.h2-select-country, .h3-select-country').remove(); // Starting over...
+
+                    $('<h2/>').addClass('h2-select-country')
+                        .append($('<a/>').attr('href', countryDetailsURL).text(data.countryName))
+                        .insertBefore(chartEle);
+
+                    $('<h3/>').addClass('h3-select-country').text(data.mostSentMessage.total)
+                        .append(" <small>2016</small>")
+                        .insertBefore(chartEle);
+
+                    console.log(data);
+
+                    LoadChartForCountry(chartEle, data.flattenData);
+                });
+            });
+
+            function GetData(url, data) {
+                if (url == undefined) return Promise.reject("No url");
+                return new Promise(function (resolve, reject) {
+                    $.ajax({ url: url, dataType: 'json', data: data, type: (data) ? "POST" : "GET" })
+                        .done(function (data) { resolve(data); })
+                        .fail(function (err) { reject(err); });
+                });
+            }
+
+            function LoadOptionsFromUrl(url, elements, emptyText, selected) {
+                return GetData(url).then(function (data) {
+
+                    data = JSON.parse(data);
+                    data.sort();
+
+                    $.each(elements, function (ei, element) {
+
+                        if (!Array.isArray(emptyText) && emptyText != "")
+                            $('<option/>', { text: emptyText, value: "" }).appendTo($(element));
+                        else if (Array.isArray(emptyText) && emptyText[ei])
+                            $('<option/>', { text: emptyText[ei], value: "" }).appendTo($(element));
+
+                        $.each(data, function (i, obj) {
+                            $('<option/>', { value: obj, text: obj, })
+                                .attr("selected", (obj == selected[ei]) ? "Selected" : false)
+                                .appendTo($(element));
+                        });
+
+                    });
+
+                    return data;
+
+                });
+            }
 
         })();
     </script>
