@@ -20,7 +20,7 @@
 	<div class="row">
 
 		<!-- World Map -->
-		<div class="col-md-12">
+		<div class="col-md-8">
 
 			<div class="panel panel-default">
 				<div class="panel-heading">
@@ -35,6 +35,7 @@
 		</div>
 
 		<div class="col-md-4">
+
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">Top 10 Countries</h3>
@@ -55,85 +56,85 @@
                     <a href="@Url.Action("Index", "Countries")" class="btn btn-primary btn-block">View All Country Trends</a>
                 </div>
 			</div>
-		</div>
 
-		<div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Live Feed (SignalR)</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="btn-group">
+                        <a href="#" class="btn btn-success liveFeedStart">Start</a>
+                        <a href="#" class="btn btn-danger liveFeedStop">Stop</a>
+                        <a href="#" class="btn btn-warning liveFeedReset">Reset</a>
+                    </div>
+                    <hr />
+                    <div class="life-feed-chart" style="height:235px;"></div>
+                </div>
+            </div>
 
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h3 class="panel-title">Live Feed (SignalR)</h3>
-				</div>
-				<div class="panel-body">
-					<div class="btn-group">
-						<a href="#" class="btn btn-success liveFeedStart">Start</a>
-						<a href="#" class="btn btn-danger liveFeedStop">Stop</a>
-						<a href="#" class="btn btn-warning liveFeedReset">Reset</a>
-					</div>
-					<hr />
-					<div class="life-feed-chart" style="height:380px;"></div>
-				</div>
-			</div>
-
-		</div>
-
-		<!-- Top Three Message Types -->
-		<div class="col-md-12">
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h3 class="panel-title">Overall Top 3 Message Types</h3>
-				</div>
-				<div class="panel-body">
-
-					<div class="row">
-						<div class="col-md-4">
-							<div class="top-message-chart" data-top-chart="1"></div>
-							<h3 class="text-center">--</h3>
-						</div>
-						<div class="col-md-4">
-							<div class="top-message-chart" data-top-chart="2"></div>
-							<h3 class="text-center">--</h3>
-						</div>
-						<div class="col-md-4">
-							<div class="top-message-chart" data-top-chart="3"></div>
-							<h3 class="text-center">--</h3>
-						</div>
-					</div>
-
-				</div>
-			</div>
-		</div>
-
-
-		<!-- Message Appearance -->
-		<!-- Message Traffic and trends -->
-		<div class="col-md-12">
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h3 class="panel-title">Messages (Appearance Heatmap and Trend)</h3>
-				</div>
-				<div class="panel-body">
-
-					<div class="form-inline">
-						<div class="form-group">
-							<select class="form-control calendar-heatmap-messagetype"></select>
-						</div>
-						<div class="btn-group">
-							<a href="#" class="btn btn-primary calendar-heatmap-previous">Previous</a>
-							<a href="#" class="btn btn-primary calendar-heatmap-next">Next</a>
-						</div>
-						<a href="#" class="btn btn-warning calendar-heatmap-reset">Reset</a>
-					</div>
-
-					<hr />
-					<div class="calendar-heatmap"></div>
-					<hr />
-					<div class="traffic-chart" style="height:380px;"></div>
-
-				</div>
-			</div>
 		</div>
 
 	</div>
+
+    <div class="row">
+
+        <!-- Top Three Message Types -->
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Overall Top 3 Message Types</h3>
+                </div>
+                <div class="panel-body">
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="top-message-chart" data-top-chart="1"></div>
+                            <h3 class="text-center">--</h3>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="top-message-chart" data-top-chart="2"></div>
+                            <h3 class="text-center">--</h3>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="top-message-chart" data-top-chart="3"></div>
+                            <h3 class="text-center">--</h3>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Appearance -->
+        <!-- Message Traffic and trends -->
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Messages (Appearance Heatmap and Trend)</h3>
+                </div>
+                <div class="panel-body">
+
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control calendar-heatmap-messagetype"></select>
+                        </div>
+                        <div class="btn-group">
+                            <a href="#" class="btn btn-primary calendar-heatmap-previous">Previous</a>
+                            <a href="#" class="btn btn-primary calendar-heatmap-next">Next</a>
+                        </div>
+                        <a href="#" class="btn btn-warning calendar-heatmap-reset">Reset</a>
+                    </div>
+
+                    <hr />
+                    <div class="calendar-heatmap"></div>
+                    <hr />
+                    <div class="traffic-chart" style="height:380px;"></div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
 
 </div>
 
@@ -161,16 +162,11 @@
 			}
 
 		.top-message-chart {
-			height: 280px;
+			height: 180px;
 			margin-top: 1rem;
 			width: 100%;
 		}
 
-		.vs-other-chart-pie, .vs-other-chart-line {
-			height: 280px;
-			margin-top: 2rem;
-			width: 100%;
-		}
         #regions_date_slider {
             margin:5px 35px 50px 35px;
         }
@@ -459,18 +455,20 @@
 				};
 				self.hub.client.tickerReset = function () {
 					console.log('Live Feed Reset');
-					self.clearData();
+                    self.clearData();
 				};
 				self.hub.client.tickerUpdate = function (record) {
-
-					console.log('SignalR data received.');
-
 					if (self.chart == null) return;
 
 					self.trimData(100);
 					self.addData(moment.utc(record.Item1).toDate(), record.Item2);
 					self.renderChart();
-				};
+                };
+                self.hub.client.tickerFinished = function () {
+                    console.log("Feed finished, restarting.");
+                    self.clearData();
+                    self.PlayFeed();
+                };
 
 				$.connection.hub.start().done(function () {
 					
@@ -498,8 +496,6 @@
 
 					self.chart = self.element.CanvasJSChart(); // because odd?
 
-					console.log(self.chart);
-
 				});
 
 			};
@@ -522,7 +518,7 @@
 				this.chart = null; // new CalHeatMap();
 
 				this.chartDefaultOptions = {
-					data: self.data,
+					data: [],
 					itemSelector: self.element,
 					cellSize: 30,
 					legendColors: ["#ecf5e2", "#232181"],
@@ -541,27 +537,37 @@
 					nextSelector: options.nextSelector
 				};
 
-				this.loadData = function (data) {
-					var eData = Enumerable.From(data);
-					this.sourceData = eData;
+                this.loadData = function (data) {
+                    self.sourceData = null;
+                    self.sourceData = Enumerable.From(data);
 
-					var startDate = moment(eData.FirstOrDefault().date).toDate();
-					var lastDate = moment(eData.LastOrDefault().date).toDate();
-					eData.ForEach(function (x) { self.data[moment(x.date).unix()] = x.total; });
+                    var startDate = moment(self.sourceData.FirstOrDefault().date).toDate();
+                    var lastDate = moment(self.sourceData.LastOrDefault().date).toDate();
 
+                    self.data = {};
+                    self.sourceData.ForEach(function (x) { self.data[moment(x.date).unix()] = x.total; });
+
+                    self.chartDefaultOptions.data = data;
 					self.chartDefaultOptions.start = (this.currentView == 'month') ? startDate : (self.chartDefaultOptions.start || startDate);
 					self.chartDefaultOptions.minDate = startDate;
-					self.chartDefaultOptions.maxDate = lastDate;
+                    self.chartDefaultOptions.maxDate = lastDate;
 				};
 
 				this.render = function (view, data) {
 
-					if (data != null) self.loadData(data);
+                    if (data != null)
+                        self.loadData(data);
+
 					if (self.chart != null) self.chart = self.chart.destroy();
-					if (self.chart == null) self.chart = new CalHeatMap();
+
+                    self.chart = new CalHeatMap();
 
 					var viewOptions = getOptions(view);
-					self.currentView = view;
+                    self.currentView = view;
+                    viewOptions.data = self.data;
+
+                    console.log(viewOptions);
+
 					self.chart.init(viewOptions);
 				};
 
@@ -569,12 +575,13 @@
 					return $.extend(true, {}, self.chartDefaultOptions, (view != "month") ? getDayOptions() : getMonthOptions());
 				};
 				function getMonthOptions() {
-					var upperDomain = self.sourceData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total");
+                    var upperDomain = Math.floor(self.sourceData.GroupBy("moment($.date).startOf('day').format()", null, function (key, g) { return { date: key, total: g.Sum("$.total") }; }).Max("$.total"));
+                    console.log(upperDomain);
 					return {
 						domain: "month",
 						subDomain: "x_day",
 						subDomainTextFormat: "%d",
-						range: 2,
+                        range: 2,
 						domainGutter: 15,
 						legend: Enumerable.RangeTo(0, upperDomain, (upperDomain / 6)).ToArray(),
 						onClick: function (date, nb) {
@@ -584,7 +591,8 @@
 					};
 				};
 				function getDayOptions() {
-					var upperDomain = self.sourceData.Max("$.total");
+                    var upperDomain = Math.floor(self.sourceData.Max("$.total"));
+                    console.log(upperDomain);
 					return {
 						domain: "day",
 						subDomain: "hour",
@@ -695,7 +703,7 @@
 					backgroundColor: "transparent",
 					title: {
 						fontColor: "#848484",
-						fontSize: 70,
+						fontSize: 35,
 						horizontalAlign: "center",
 						text: "",
 						verticalAlign: "center"
@@ -735,7 +743,6 @@
 
 				};
 			};
-
 
 			//////////////////
 			// Setup

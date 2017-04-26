@@ -17,7 +17,9 @@ namespace LogFileParser.Hubs
 		void tickerStarted();
 		void tickerStopped();
 		void tickerReset();
-	}
+        void tickerFinished();
+
+    }
 
 	public class LogRecordTicker
 	{
@@ -117,10 +119,13 @@ namespace LogFileParser.Hubs
 								x.TimestampUTC.Year,
 								x.TimestampUTC.Month,
 								x.TimestampUTC.Day,
-								//x.TimestampUTC.Hour,
+								x.TimestampUTC.Hour,
 								//x.TimestampUTC.Minute
 							})
-							.Select(x => new { x.Key, Count = x.Count() });					
+                            .Select(x => new { x.Key, Count = x.Count() })
+                            .ToList()
+                            .GroupBy(x => (new DateTime(x.Key.Year, x.Key.Month, x.Key.Day, x.Key.Hour, 0, 0)).RoundToNearest(TimeSpan.FromHours(6)))
+							.Select(x => new { Date = x.Key, Count = x.Sum(v => v.Count) });
 
 						var rEnum = records.GetEnumerator();
 
@@ -128,20 +133,17 @@ namespace LogFileParser.Hubs
 						{
 							var record = rEnum.Current;
 
-							BroadcastRecord(new Tuple<DateTime, int>(
-								//new DateTime(record.Key.Year, record.Key.Month, record.Key.Day, record.Key.Hour, record.Key.Minute, 0),
-								//new DateTime(record.Key.Year, record.Key.Month, record.Key.Day, record.Key.Hour, 0, 0),
-								new DateTime(record.Key.Year, record.Key.Month, record.Key.Day, 0, 0, 0),
-								record.Count
-							));
+							BroadcastRecord(new Tuple<DateTime, int>(record.Date, record.Count));
 
 							Task.Delay(1000).Wait();
 						}
 					}
 
-                    TickerState = TickerState.Closed;
-
-                    BroadcastTickerStateChange(TickerState.Closed);
+                    if (TickerState == TickerState.Open)
+                    {
+                        TickerState = TickerState.Finished;
+                        BroadcastTickerStateChange(TickerState.Finished);
+                    }
 
                     _emittingRecords = false;
 				}
@@ -158,6 +160,9 @@ namespace LogFileParser.Hubs
 				case TickerState.Open:
 					Clients.All.tickerStarted();
 					break;
+                case TickerState.Finished:
+                    Clients.All.tickerFinished();
+                    break;
 				default:
 					break;
 			}
@@ -178,7 +183,8 @@ namespace LogFileParser.Hubs
 	public enum TickerState
 	{
 		Closed,
-		Open
+		Open,
+        Finished
 	}
 
 }
