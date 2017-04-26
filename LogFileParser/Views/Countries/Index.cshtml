@@ -11,15 +11,13 @@
 
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Top 5 Country Messaging Trends</h3>
+                    <h3 class="panel-title">Top Countries in Messages</h3>
                 </div>
                 <div class="panel-body">
 
                     <div class="row">
                         
-                        <div class="col-md-1">&nbsp;</div>
-
-                        @foreach(var country in Model.Data.OrderByDescending(x => x.TotalMessagesSent).Take(5))
+                        @foreach(var country in Model.Data.OrderByDescending(x => x.TotalMessagesSent).Take(6))
                         {
                             <div class="country-chart-container col-md-2" style="margin-bottom:50px">
                                 <h2><a href="@Url.Action("details", "Countries", new { countryCode = country.CountryCode })">@country.CountryName</a></h2>
@@ -44,29 +42,24 @@
     <div class="row">
 
         <div class="col-md-12">
-            <div class="form-horizontal">
-                <div class="input-group">
-                    <span class="input-group-addon">
-                        <i class="fa fa-globe" aria-hidden="true"></i>
-                    </span>
-                    <select type="text" class="country_select form-control input-lg">
-                        <option>-- Select Country --</option>
-                    </select>
-                </div>
-            </div>
-
-            </hr>
-
+            
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Results</h3>
+                    <h3 class="panel-title">Go To A Country</h3>
                 </div>
                 <div class="panel-body">
-                    <div class="country-select-chart-container" style="margin-bottom:50px">
-                        <div class="country-select-trend-chart text-center" style="height:300px;">
-                            @Html.Partial("_Loading")
-                        </div>
+                    
+                    <div class="row country-list">
+                        @foreach(var country in Model.Data.OrderBy(x => x.CountryName))
+                        {
+                            <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2">
+                                <a href="@Url.Action("details", new { countryCode = country.CountryCode })" class="btn btn-link">
+                                    @country.CountryName <span class="sparkline" data-sparkline-data="@Json.Encode(country.FlattenData.OrderByDescending(x => x.Date).Select(x => x.Total).Take(15))"></span>
+                                </a>
+                            </div>
+                        }
                     </div>
+
                 </div>
             </div>
 
@@ -78,17 +71,28 @@
 
 @section Styles {
     @Styles.Render("~/Content/plugins/dataTables")
+
+    <style>
+        .country-list div, .country-list div a {
+            overflow-wrap: break-word;
+        }
+    </style>
+
 }
 
 @section Scripts {
     @Scripts.Render("~/plugins/jqcanvasjs")
     @Scripts.Render("~/bundles/momentjs")
     @Scripts.Render("~/plugins/dataTables")
+    @Scripts.Render("~/bundles/plugins/sparkline")
 
     <script>
         (function () {
 
-            function LoadChartForCountry(chartElem, data) {
+            // Top few countries
+            $('.country-chart-container').each(function () {
+                var chartElem = $(this).find('.country-trend-chart');
+                var data = chartElem.data('chart-data');
 
                 var chartData = Enumerable.From(data).Select(function (e) {
                     var dataDate = e.Date || e.date;
@@ -139,46 +143,17 @@
                     chartElem.CanvasJSChart(chartConfig);
                 }
 
-            }
-
-            // Top few countries
-            $('.country-chart-container').each(function () {
-                var chartElem = $(this).find('.country-trend-chart');
-                LoadChartForCountry(chartElem, chartElem.data('chart-data'));
             });
 
-            // Fill out the country select input
-            @*Since I already have the model with the countries in it...*@
-            var knownCountries = @Html.Raw(Json.Encode(Model.Data.Select(x => new { x.CountryCode, x.CountryName, url = Url.Action("details", new { countryCode = x.CountryCode }) }).OrderBy(x => x.CountryName)));
-            $.each(knownCountries, function (i, k) {
-                $('<option/>', { value: k.CountryCode, text: k.CountryName, "data-country-url": k.url }).appendTo($('.country_select'));
-            });
+            $('.sparkline').each(function () {
 
-            var getCountriesDetailsUrl = "@Url.Action("GetCountryData")";
-            $('.country_select').on('change', function (e) {
-                var ele = $(this);
-                var countryCode = ele.val();
-                var countryDetailsURL = ele.find(':selected').data('country-url');
-                var chartEle = $('.country-select-trend-chart');
+                var data = $(this).data('sparkline-data');
+                if (data.length < 5) return;
 
-                if (countryCode == "") return;
-
-                GetData(getCountriesDetailsUrl, { countryCode: countryCode }).then(function (data) {
-                    
-                    $('.h2-select-country, .h3-select-country').remove(); // Starting over...
-
-                    $('<h2/>').addClass('h2-select-country')
-                        .append($('<a/>').attr('href', countryDetailsURL).text(data.countryName))
-                        .insertBefore(chartEle);
-
-                    $('<h3/>').addClass('h3-select-country').text(data.mostSentMessage.total)
-                        .append(" <small>2016</small>")
-                        .insertBefore(chartEle);
-
-                    console.log(data);
-
-                    LoadChartForCountry(chartEle, data.flattenData);
+                $(this).sparkline(data, {
+                    type: 'line'
                 });
+
             });
 
             function GetData(url, data) {
@@ -187,32 +162,6 @@
                     $.ajax({ url: url, dataType: 'json', data: data, type: (data) ? "POST" : "GET" })
                         .done(function (data) { resolve(data); })
                         .fail(function (err) { reject(err); });
-                });
-            }
-
-            function LoadOptionsFromUrl(url, elements, emptyText, selected) {
-                return GetData(url).then(function (data) {
-
-                    data = JSON.parse(data);
-                    data.sort();
-
-                    $.each(elements, function (ei, element) {
-
-                        if (!Array.isArray(emptyText) && emptyText != "")
-                            $('<option/>', { text: emptyText, value: "" }).appendTo($(element));
-                        else if (Array.isArray(emptyText) && emptyText[ei])
-                            $('<option/>', { text: emptyText[ei], value: "" }).appendTo($(element));
-
-                        $.each(data, function (i, obj) {
-                            $('<option/>', { value: obj, text: obj, })
-                                .attr("selected", (obj == selected[ei]) ? "Selected" : false)
-                                .appendTo($(element));
-                        });
-
-                    });
-
-                    return data;
-
                 });
             }
 

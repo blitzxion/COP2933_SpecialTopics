@@ -109,8 +109,12 @@ namespace LogFileParser
 			bundles.Add(new StyleBundle("~/Content/jvectormaps").Include(
 				"~/Content/jquery-jvectormap.css"));
 
-			// Cal Heatmap
-			bundles.Add(new ScriptBundle("~/bundles/plugins/calHeatmap").Include(
+            // Sparkline
+            bundles.Add(new ScriptBundle("~/bundles/plugins/sparkline").Include(
+                "~/Scripts/plugins/sparkline/jquery.sparkline.min.js"));
+
+            // Cal Heatmap
+            bundles.Add(new ScriptBundle("~/bundles/plugins/calHeatmap").Include(
 				"~/Scripts/plugins/calHeatmap/cal-heatmap.js"));
 
 			bundles.Add(new StyleBundle("~/Content/plugins/calHeatmap").Include(

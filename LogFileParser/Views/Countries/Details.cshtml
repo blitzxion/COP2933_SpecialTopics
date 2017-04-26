@@ -165,13 +165,18 @@
                 var axisConfig = { tickLength: 0, margin: 0, lineThickness: 0, gridThickness: 0, valueFormatString: " " };
 
                 chartElem.CanvasJSChart({
-                    //axisY: axisConfig,
-                    //axisX: axisConfig,
+                    legend: {
+                        cursor: "pointer",
+                        itemclick: function (e) {
+                            e.dataSeries.visible = !(typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible);
+                            e.chart.render();
+                        }
+                    },
                     data: [
                         {
                             type: 'line',
                             //markerSize: 0,
-                            dataPoints: chartDataArray
+                            dataPoints: chartDataArray,
                         },
                         {
                             type: "line",
@@ -186,41 +191,10 @@
             function LoadMessageChart()
             {
                 var chartElem = $('.messages-chart');
-
-                var chartDataPrep = Enumerable.From(chartElem.data('chart-data')).GroupBy("moment($.Date).format()", null, function (key, g) {
-
-                    var points = [];
-                    var thisDate = moment(key).format();
-                    var pointAverage = g.Average("$.Total");
-
-                    var otherPointsTotal = g.Where(function (e) { return e.Total < pointAverage }).Sum("$.Total");
-                    points = g.Where(function (e) { return e.Total >= pointAverage }).ToArray();
-
-                    for (var i = 0; i < points.length; i++) points[i].Date = thisDate;
-
-                    if (otherPointsTotal > 0)
-                        points.push({
-                            Date: thisDate,
-                            MessageClass: "OTHER",
-                            Total: otherPointsTotal
-                        });
-
-                    //console.log("Date: ", key);
-                    //console.log("Group Source:", g);
-                    //console.log("Average", pointAverage);
-                    //console.log("Top:", points);
-                    //console.log("Others:", otherPointsTotal);
-                    //console.log("==============================");
-
-                    return points
-                });
-
-                var cd = chartDataPrep.SelectMany("$").OrderBy("$.Date");
-                
-                var chartData = cd.GroupBy("$.MessageClass", null, function (key, g) {
-
+                var chartDataPrep = Enumerable.From(chartElem.data('chart-data'));
+                var chartData = chartDataPrep.OrderBy("$.Date").GroupBy("$.MessageClass", null, function (key, g) {
                     return {
-                        type: "column",
+                        type: "spline",
                         showInLegend: "true",
                         legendText: key,
                         dataPoints: g.OrderBy("moment($.Date).toDate()").Select(function (e) {
@@ -231,20 +205,19 @@
                             };
                         }).ToArray()
                     }
-                    
                 });
-
-                var data = chartData.ToArray();
-
-                console.log(data);
-
+                
                 chartElem.CanvasJSChart({
-                    toolTip: {
-                        content: "{name}: {y}"
+                    toolTip: { content: "{name}: {y}" },
+                    legend: {
+                        cursor: "pointer",
+                        itemclick: function (e) {
+                            e.dataSeries.visible = !(typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible);
+                            e.chart.render();
+                        }
                     },
-                    data: data
+                    data: chartData.ToArray()
                 });
-
             }
 
 
