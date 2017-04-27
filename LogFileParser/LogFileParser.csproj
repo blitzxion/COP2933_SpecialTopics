@@ -226,6 +226,7 @@
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\CountriesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\MessagesController.cs" />
     <Compile Include="Controllers\QueriesController.cs" />
     <Compile Include="Controllers\RecordsController.cs" />
     <Compile Include="Global.asax.cs">
@@ -244,8 +245,10 @@
     <Compile Include="Hubs\LogRecordTickerHub.cs" />
     <Compile Include="ViewModels\CountryViewModels.cs" />
     <Compile Include="ViewModels\DataTableModels.cs" />
+    <Compile Include="ViewModels\MessageViewModels.cs" />
     <Compile Include="ViewModels\RecordsViewModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewModels\ViewModelInterfaces.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\animate.css" />
@@ -455,6 +458,8 @@
     <Content Include="Views\Shared\_TopNavBar2.cshtml" />
     <Content Include="Views\Countries\Index.cshtml" />
     <Content Include="Views\Countries\Details.cshtml" />
+    <Content Include="Views\Messages\Index.cshtml" />
+    <Content Include="Views\Messages\Details.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

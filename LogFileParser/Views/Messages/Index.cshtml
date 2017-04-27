@@ -1,0 +1,170 @@
+﻿@model IEnumerable<RecordMetrics>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<div class="wrapper wrapper-content animated fadeInRight">
+
+    <div class="row">
+
+        <div class="col-md-12">
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Top Messages</h3>
+                </div>
+                <div class="panel-body">
+
+                    <div class="row">
+
+                        @foreach (var item in Model.OrderByDescending(x => x.Total).Take(6))
+                        {
+                            <div class="item-chart-container col-md-2" style="margin-bottom:50px">
+                                <h2><a href="@Url.Action("details", new { messageClass = item.Name })">@item.Name</a></h2>
+                                <h3>@item.MostUsed.Total <small>2016</small></h3>
+                                <div class="item-trend-chart" style="height:100px;" data-chart-data="@Json.Encode(item.FlattenData)">
+                                    @Html.Partial("_Loading")
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-12">
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Go To A Message</h3>
+                </div>
+                <div class="panel-body">
+
+                    <div class="row item-list">
+                        @foreach (var item in Model.OrderBy(x => x.Name))
+                        {
+                            <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2">
+                                <a href="@Url.Action("details", new { messageClass = item.Name })" class="btn btn-link">
+                                    @item.Name <span class="sparkline" data-sparkline-data="@Json.Encode(item.FlattenData.OrderByDescending(x => x.Timestamp).Select(x => x.Total).Take(15))"></span>
+                                </a>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Styles {
+    @Styles.Render("~/Content/plugins/dataTables")
+
+    <style>
+        .item-list div, .item-list div a {
+            overflow-wrap: break-word;
+        }
+    </style>
+
+}
+
+@section Scripts {
+    @Scripts.Render("~/plugins/jqcanvasjs")
+    @Scripts.Render("~/bundles/momentjs")
+    @Scripts.Render("~/plugins/dataTables")
+    @Scripts.Render("~/bundles/plugins/sparkline")
+
+    <script>
+        (function () {
+
+            // Top few messages
+            $('.item-chart-container').each(function () {
+                var chartElem = $(this).find('.item-trend-chart');
+                var data = chartElem.data('chart-data');
+                
+                var chartData = Enumerable.From(data).Select(function (e) {
+                    var dataDate = e.Timestamp || e.timestamp;
+                    var dataTotal = e.Total || e.total;
+
+                    var date = moment(dataDate).toDate(); // new Date(parseInt(dataDate.substr(6)));
+                    var total = dataTotal;
+                    return { x: date, y: total };
+                });
+
+                var regData = Enumerable.From(chartData).Select("[moment($.x).unix(), $.y]").ToArray();
+                var rDataLine = regression('linear', regData);
+                var lineData = Enumerable.From(rDataLine.points).Select("{x:moment.unix($[0]).toDate(), y:$[1]}").ToArray();
+
+
+                var chartDataArray = chartData.ToArray();
+
+                if (chartDataArray.length > 0) // Sanity
+                    chartDataArray[chartDataArray.length - 1].markerSize = 10;
+
+                var axisConfig = { tickLength: 0, margin: 0, lineThickness: 0, gridThickness: 0, valueFormatString: " " };
+
+                var chartConfig = {
+                    interactivityEnabled: false,
+                    axisY: axisConfig,
+                    axisX: axisConfig,
+                    data: [
+                        {
+                            type: 'spline',
+                            markerSize: 0,
+                            dataPoints: chartDataArray
+                        },
+                        {
+                            type: "line",
+                            markerSize: 0,
+                            color: "gray",
+                            dataPoints: lineData
+                        }
+                    ]
+                };
+
+                var chart = chartElem.CanvasJSChart();
+
+                if (chart) {
+                    chart.options.data = chartConfig.data;
+                    chart.render();
+                } else {
+                    chartElem.CanvasJSChart(chartConfig);
+                }
+
+            });
+
+            $('.sparkline').each(function () {
+
+                var data = $(this).data('sparkline-data');
+                if (data.length < 5) return;
+
+                $(this).sparkline(data, {
+                    type: 'line'
+                });
+
+            });
+
+            function GetData(url, data) {
+                if (url == undefined) return Promise.reject("No url");
+                return new Promise(function (resolve, reject) {
+                    $.ajax({ url: url, dataType: 'json', data: data, type: (data) ? "POST" : "GET" })
+                        .done(function (data) { resolve(data); })
+                        .fail(function (err) { reject(err); });
+                });
+            }
+
+        })();
+    </script>
+
+}

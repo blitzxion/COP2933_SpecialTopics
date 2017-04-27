@@ -12,7 +12,10 @@
                 <li class="@Html.IsSelected(controller:"Countries")">
                     <a href="@Url.Action("Index", "Countries")">Countries</a>
                 </li>
-                
+
+                <li class="@Html.IsSelected(controller:"Messages")">
+                    <a href="@Url.Action("Index", "Messages")">Messages</a>
+                </li>
 
 				<li class="@Html.IsSelected(controller:"Analytics") dropdown">
 					<a aria-expanded="false" role="button" class="dropdown-toggle" data-toggle="dropdown" href="@Url.Action("Index", "Analytics")">Analytics <span class="caret"></span></a>
@@ -36,6 +39,7 @@
 						<li class="@Html.IsSelected("Records", "Manage")"><a href="@Url.Action("Manage", "Records")">Management</a></li>
 					</ul>
 				</li>
+
 			</ul>
 		</div>
 	</nav>

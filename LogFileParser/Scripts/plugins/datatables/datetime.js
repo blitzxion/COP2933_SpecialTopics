@@ -44,7 +44,9 @@
 
 		return function (d, type, row) {
 
-			if (!d) return null;
+            if (!d) return null;
+
+            console.log(d);
 
 			var m = window.moment(d, from, locale, true);
 

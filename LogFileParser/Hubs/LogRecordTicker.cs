@@ -135,7 +135,7 @@ namespace LogFileParser.Hubs
 
 							BroadcastRecord(new Tuple<DateTime, int>(record.Date, record.Count));
 
-							Task.Delay(1000).Wait();
+							Task.Delay(500).Wait();
 						}
 					}
 
