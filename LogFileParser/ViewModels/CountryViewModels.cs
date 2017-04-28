@@ -6,6 +6,7 @@ using LogFileParser.Helpers;
 
 namespace LogFileParser.ViewModels
 {
+    [Obsolete("Do not use this, just use an IEnumerable", true)]
     public class CountryMetrics
     {
         public readonly IEnumerable<CountryMetricDetails> Data;
@@ -14,7 +15,7 @@ namespace LogFileParser.ViewModels
             get
             {
                 if (!Data.Any()) return null;
-                return Data.OrderByDescending(d => d.TotalMessagesSent).FirstOrDefault();
+                return Data.OrderByDescending(d => d.Total).FirstOrDefault();
             }
         }
         public CountryMetricDetails LeastSendingCountry
@@ -22,7 +23,7 @@ namespace LogFileParser.ViewModels
             get
             {
                 if (!Data.Any()) return null;
-                return Data.OrderBy(d => d.TotalMessagesSent).FirstOrDefault();
+                return Data.OrderBy(d => d.Total).FirstOrDefault();
             }
         }
         public DateTime FirstDateSeen
@@ -30,7 +31,7 @@ namespace LogFileParser.ViewModels
             get
             {
                 if (!Data.Any()) return DateTime.MinValue;
-                return Data.Select(x => x.Data.Min(d => d.Date.Value)).FirstOrDefault();
+                return Data.Select(x => x.Data.Min(d => d.Timestamp)).FirstOrDefault();
             }
         }
         public DateTime LastDateSeen
@@ -38,7 +39,7 @@ namespace LogFileParser.ViewModels
             get
             {
                 if (!Data.Any()) return DateTime.MinValue;
-                return Data.Select(x => x.Data.Max(d => d.Date.Value)).FirstOrDefault();
+                return Data.Select(x => x.Data.Max(d => d.Timestamp)).FirstOrDefault();
             }
         }
 
@@ -49,10 +50,10 @@ namespace LogFileParser.ViewModels
 
     }
 
-    public class CountryMetricDetails
+    public class CountryMetricDetails : IRecordMetrics
     {
         public string CountryCode { get; set; }
-        public string CountryName { get; set; }
+        public string Name { get; set; }
         public IEnumerable<CountryMessageDetails> Data { get; set; }
 
         public IEnumerable<CountryMessageDetails> FlattenData
@@ -60,17 +61,17 @@ namespace LogFileParser.ViewModels
             get
             {
                 if (!Data.Any()) return default(IEnumerable<CountryMessageDetails>);
-                return Data.GroupBy(d => d.Date)
+                return Data.GroupBy(d => d.Timestamp)
                     .Select(d => new CountryMessageDetails()
                     {
-                        Date = d.Key,
-                        MessageClass = string.Join(",", d.Select(v => v.MessageClass).Distinct()),
+                        Timestamp = d.Key,
+                        Name = string.Join(",", d.Select(v => v.Name).Distinct()),
                         Total = d.Sum(v => v.Total)
-                    }).OrderBy(d => d.Date);
+                    }).OrderBy(d => d.Timestamp);
             }
         }
 
-        public double AverageMessagesSent
+        public double Average
         {
             get
             {
@@ -79,7 +80,7 @@ namespace LogFileParser.ViewModels
             }
         }
 
-        public int TotalMessagesSent
+        public int Total
         {
             get
             {
@@ -88,7 +89,7 @@ namespace LogFileParser.ViewModels
             }
         }
 
-        public double MessageStdDev
+        public double StdDev
         {
             get
             {
@@ -97,21 +98,21 @@ namespace LogFileParser.ViewModels
             }
         }
 
-        public CountryMessageDetails MostSentMessage
+        public IRecordDetails MostUsed
         {
             get
             {
                 if (!Data.Any()) return null;
-                return Data.GroupBy(d => d.MessageClass).Select(x => new CountryMessageDetails() { MessageClass = x.Key, Total = x.Sum(v => v.Total) }).OrderByDescending(x => x.Total).FirstOrDefault();
+                return Data.GroupBy(d => d.Name).Select(x => new CountryMessageDetails() { Name = x.Key, Total = x.Sum(v => v.Total) }).OrderByDescending(x => x.Total).FirstOrDefault();
             }
         }
 
-        public CountryMessageDetails LeastSentMessage
+        public IRecordDetails LeastUsed
         {
             get
             {
                 if (!Data.Any()) return null;
-                return Data.GroupBy(d => d.MessageClass).Select(x => new CountryMessageDetails() { MessageClass = x.Key, Total = x.Sum(v => v.Total) }).OrderBy(x => x.Total).FirstOrDefault();
+                return Data.GroupBy(d => d.Name).Select(x => new CountryMessageDetails() { Name = x.Key, Total = x.Sum(v => v.Total) }).OrderBy(x => x.Total).FirstOrDefault();
             }
         }
 
@@ -122,10 +123,10 @@ namespace LogFileParser.ViewModels
 
     }
 
-    public class CountryMessageDetails
+    public class CountryMessageDetails : IRecordDetails
     {
-        public DateTime? Date { get; set; }
-        public string MessageClass { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string Name { get; set; }
         public int Total { get; set; }
     }
 }

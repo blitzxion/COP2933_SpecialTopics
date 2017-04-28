@@ -1,11 +1,11 @@
 ﻿@model CountryMetricDetails
 @{
-    ViewBag.Title = $"{Model.CountryName} Details";
+    ViewBag.Title = $"{Model.Name} Details";
 }
 
 <div class="wrapper wrapper-content animated fadeInRight">
 
-    <h1>@Model.CountryName</h1>
+    <h1>@Model.Name</h1>
 
     <div class="row">
 
@@ -17,11 +17,11 @@
                 <table class="table table-condensed table-striped table-hover">
                     <tbody>
                         <tr><td>Country Code</td><td>@Model.CountryCode</td></tr>
-                        <tr><td>Total Messages Sent</td><td>@Model.TotalMessagesSent</td></tr>
-                        <tr><td>Average Messages Sent</td><td>@Model.AverageMessagesSent</td></tr>
-                        <tr><td>Message Stnd. Deviation</td><td>@Model.MessageStdDev</td></tr>
-                        <tr><td>Most Sent Message</td><td>'@Model.MostSentMessage.MessageClass' (@Model.MostSentMessage.Total)</td></tr>
-                        <tr><td>Least Sent Message</td><td>'@Model.LeastSentMessage.MessageClass' (@Model.LeastSentMessage.Total)</td></tr>
+                        <tr><td>Total Messages Sent</td><td>@Model.Total</td></tr>
+                        <tr><td>Average Messages Sent</td><td>@Model.Average</td></tr>
+                        <tr><td>Message Stnd. Deviation</td><td>@Model.StdDev</td></tr>
+                        <tr><td>Most Sent Message</td><td>'@Model.MostUsed.Name' (@Model.MostUsed.Total)</td></tr>
+                        <tr><td>Least Sent Message</td><td>'@Model.LeastUsed.Name' (@Model.LeastUsed.Total)</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -61,7 +61,7 @@
                                     @foreach(var item in Model.FlattenData)
                                     {
                                         <tr>
-                                            <td>@item.Date.Value.ToString("yyyy-MM-ddTHH:mm:ss")</td>
+                                            <td>@item.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss")</td>
                                             <td>@item.Total</td>
                                         </tr>
                                     }
@@ -81,7 +81,7 @@
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Messages Sent by @Model.CountryName</h3>
+                    <h3 class="panel-title">Messages Sent by @Model.Name</h3>
                 </div>
                 
                 <div class="tabs-container">
@@ -111,8 +111,8 @@
                                     @foreach(var item in Model.Data)
                                     {
                                         <tr>
-                                            <td>@item.Date.Value.ToString("yyyy-MM-ddTHH:mm:ss")</td>
-                                            <td>@item.MessageClass</td>
+                                            <td>@item.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss")</td>
+                                            <td>@item.Name</td>
                                             <td>@item.Total</td>
                                         </tr>
                                     }
@@ -147,7 +147,7 @@
                 var chartElem = $('.country-chart-container').find('.country-trend-chart');
 
                 var chartData = Enumerable.From(chartElem.data('chart-data')).Select(function (e) {
-                    var date = new Date(parseInt(e.Date.substr(6)));
+                    var date = moment(e.Timestamp).toDate(); //new Date(parseInt(e.Date.substr(6)));
                     var total = e.Total;
                     return { x: date, y: total };
                 });
@@ -192,14 +192,15 @@
             {
                 var chartElem = $('.messages-chart');
                 var chartDataPrep = Enumerable.From(chartElem.data('chart-data'));
-                var chartData = chartDataPrep.OrderBy("$.Date").GroupBy("$.MessageClass", null, function (key, g) {
+
+                var chartData = chartDataPrep.OrderBy("moment($.Timestamp).toDate()").GroupBy("$.Name", null, function (key, g) {
                     return {
                         type: "stackedColumn",
                         showInLegend: "true",
                         legendText: key,
-                        dataPoints: g.OrderBy("moment($.Date).toDate()").Select(function (e) {
+                        dataPoints: g.OrderBy("moment($.Timestamp).toDate()").Select(function (e) {
                             return {
-                                x: moment(e.Date).toDate(),
+                                x: moment(e.Timestamp).toDate(),
                                 y: e.Total,
                                 name: key
                             };

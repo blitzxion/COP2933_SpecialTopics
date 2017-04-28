@@ -15,11 +15,11 @@ namespace LogFileParser.Controllers
         public ActionResult Index()
         {
             // Just group all countries up by name, date (day)
-            CountryMetrics model = null;
+            IEnumerable<CountryMetricDetails> model = null;
             using (var context = AppDbContext)
             {
                 var results = GetCountriesData(context);
-                model = new CountryMetrics(results);
+                model = results;
             }
             return View(model);
         }
@@ -38,6 +38,18 @@ namespace LogFileParser.Controllers
         }
 
         // JSON
+
+        public ActionResult GetAllCountryData()
+        {
+            CountryMetricDetails model = null;
+            using (var context = AppDbContext)
+            {
+                var results = GetCountriesData(context);
+                model = results.FirstOrDefault();
+            }
+
+            return SerializeToJsonFormatted(model);
+        }
 
         public ActionResult GetCountryData(string countryCode)
         {
@@ -84,11 +96,11 @@ namespace LogFileParser.Controllers
                 .Select(x => new CountryMetricDetails()
                 {
                     CountryCode = x.Key,
-                    CountryName = CountryCodes.GetCountryNameFromCode(x.Key),
+                    Name = CountryCodes.GetCountryNameFromCode(x.Key),
                     Data = x.OrderBy(d => d.Date).Select(y => new CountryMessageDetails()
                     {
-                        Date = y.Date,
-                        MessageClass = y.MessageClass,
+                        Timestamp = y.Date,
+                        Name = y.MessageClass,
                         Total = y.Total
                     })
                 });

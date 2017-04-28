@@ -1,4 +1,4 @@
-﻿@model CountryMetrics
+﻿@model IEnumerable<CountryMetricDetails>
 @{
     ViewBag.Title = "Country Trends";
 }
@@ -17,11 +17,11 @@
 
                     <div class="row">
                         
-                        @foreach(var country in Model.Data.OrderByDescending(x => x.TotalMessagesSent).Take(6))
+                        @foreach(var country in Model.OrderByDescending(x => x.Total).Take(6))
                         {
                             <div class="country-chart-container col-md-2" style="margin-bottom:50px">
-                                <h2><a href="@Url.Action("details", "Countries", new { countryCode = country.CountryCode })">@country.CountryName</a></h2>
-                                <h3>@country.MostSentMessage.Total <small>2016</small></h3>
+                                <h2><a href="@Url.Action("details", "Countries", new { countryCode = country.CountryCode })">@country.Name</a></h2>
+                                <h3>@country.MostUsed.Total <small>2016</small></h3>
                                 <a href="#">
                                     <div class="country-trend-chart" style="height:100px;" data-chart-data="@Json.Encode(country.FlattenData)">
                                         @Html.Partial("_Loading")
@@ -50,11 +50,11 @@
                 <div class="panel-body">
                     
                     <div class="row country-list">
-                        @foreach(var country in Model.Data.OrderBy(x => x.CountryName))
+                        @foreach(var country in Model.OrderBy(x => x.Name))
                         {
                             <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2">
                                 <a href="@Url.Action("details", new { countryCode = country.CountryCode })" class="btn btn-link">
-                                    @country.CountryName <span class="sparkline" data-sparkline-data="@Json.Encode(country.FlattenData.OrderByDescending(x => x.Date).Select(x => x.Total).Take(15))"></span>
+                                    @country.Name <span class="sparkline" data-sparkline-data="@Json.Encode(country.FlattenData.OrderByDescending(x => x.Timestamp).Select(x => x.Total).Take(15))"></span>
                                 </a>
                             </div>
                         }
@@ -95,7 +95,7 @@
                 var data = chartElem.data('chart-data');
 
                 var chartData = Enumerable.From(data).Select(function (e) {
-                    var dataDate = e.Date || e.date;
+                    var dataDate = e.Timestamp || e.timestamp;
                     var dataTotal = e.Total || e.total;
 
                     var date = moment(dataDate).toDate(); // new Date(parseInt(dataDate.substr(6)));

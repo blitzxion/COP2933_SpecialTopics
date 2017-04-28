@@ -22,7 +22,7 @@
                         {
                             <div class="item-chart-container col-md-2" style="margin-bottom:50px">
                                 <h2><a href="@Url.Action("details", new { messageClass = item.Name })">@item.Name</a></h2>
-                                <h3>@item.MostUsed.Total <small>2016</small></h3>
+                                <h3>@item.Total <small>2016</small></h3>
                                 <div class="item-trend-chart" style="height:100px;" data-chart-data="@Json.Encode(item.FlattenData)">
                                     @Html.Partial("_Loading")
                                 </div>

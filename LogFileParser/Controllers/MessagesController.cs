@@ -78,7 +78,7 @@ namespace LogFileParser.Controllers
             .Select(x => new RecordMetrics(x.OrderBy(v => v.Date).Select(v => new RecordDetails()
             {
                 Timestamp = v.Date,
-                Name = v.Country,
+                Name = CountryCodes.GetCountryNameFromCode(v.Country),
                 Total = v.Total
             }))
             {
