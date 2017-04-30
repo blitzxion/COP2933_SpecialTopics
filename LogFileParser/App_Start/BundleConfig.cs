@@ -140,6 +140,12 @@ namespace LogFileParser
 			bundles.Add(new StyleBundle("~/font-awesome/css").Include(
 				"~/fonts/font-awesome/css/font-awesome.min.css", new CssRewriteUrlTransform()));
 
+            bundles.Add(new ScriptBundle("~/bundles/plugins/globe").Include(
+                "~/Scripts/three.js",
+                "~/Scripts/plugins/globe/detector.js",
+                "~/Scripts/plugins/globe/tween.js",
+                "~/Scripts/plugins/globe/globe.js"));
+
 			bundles.Add(new ScriptBundle("~/bundles/utils").Include(
 				"~/Scripts/linq.js",
 				"~/Scripts/color-hash.js",

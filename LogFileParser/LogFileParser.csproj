@@ -53,6 +53,9 @@
       <HintPath>..\packages\Castle.DynamicLinqQueryBuilder.1.0.5\lib\Castle.DynamicLinqQueryBuilder.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="CsvHelper, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
+      <HintPath>..\packages\CsvHelper.2.16.3.0\lib\net45\CsvHelper.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
       <Private>True</Private>
@@ -245,6 +248,7 @@
     <Compile Include="Hubs\LogRecordTickerHub.cs" />
     <Compile Include="ViewModels\CountryViewModels.cs" />
     <Compile Include="ViewModels\DataTableModels.cs" />
+    <Compile Include="ViewModels\HomeViewModels.cs" />
     <Compile Include="ViewModels\MessageViewModels.cs" />
     <Compile Include="ViewModels\RecordsViewModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -280,6 +284,7 @@
     <Content Include="Content\plugins\calHeatmap\cal-heatmap.css" />
     <Content Include="Content\plugins\datatables\datatables.min.css" />
     <Content Include="Content\plugins\datatables\dataTables.css" />
+    <Content Include="Content\plugins\globe\world.jpg" />
     <Content Include="Content\plugins\jasny\jasny-bootstrap.min.css" />
     <Content Include="Content\plugins\jQueryBuilder\query-builder.dark.css" />
     <Content Include="Content\plugins\jQueryBuilder\query-builder.dark.min.css" />
@@ -353,6 +358,7 @@
     <Content Include="Scripts\d3\LICENSE" />
     <Content Include="Scripts\d3\CHANGES.md" />
     <Content Include="Scripts\d3\API.md" />
+    <Content Include="Content\country_centroids_all.csv" />
     <None Include="Scripts\jquery-3.1.1.intellisense.js" />
     <Content Include="Scripts\app.js" />
     <Content Include="Scripts\app\inspinia.js" />
@@ -406,6 +412,9 @@
     <Content Include="Scripts\plugins\datatables\datatables.min.js" />
     <Content Include="Scripts\plugins\bootstrapDatepicker\bootstrap-datepicker.min.js" />
     <Content Include="Scripts\plugins\datatables\datetime.js" />
+    <Content Include="Scripts\plugins\globe\detector.js" />
+    <Content Include="Scripts\plugins\globe\globe.js" />
+    <Content Include="Scripts\plugins\globe\tween.js" />
     <Content Include="Scripts\plugins\jasny\jasny-bootstrap.min.js" />
     <Content Include="Scripts\plugins\jQueryBuilder\query-builder.js" />
     <Content Include="Scripts\plugins\jQueryBuilder\query-builder.min.js" />
@@ -425,6 +434,7 @@
     <Content Include="Scripts\respond.min.js" />
     <Content Include="Scripts\sql-parser.js" />
     <Content Include="Scripts\sql-parser.min.js" />
+    <Content Include="Scripts\three.js" />
     <Content Include="Scripts\utils.js" />
     <Content Include="Scripts\_references.js" />
     <Content Include="Web.config" />
@@ -460,6 +470,7 @@
     <Content Include="Views\Countries\Details.cshtml" />
     <Content Include="Views\Messages\Index.cshtml" />
     <Content Include="Views\Messages\Details.cshtml" />
+    <Content Include="Views\Home\Globe.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

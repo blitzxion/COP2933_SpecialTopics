@@ -1,0 +1,97 @@
+﻿@using LogFileParser.Helpers;
+@model IEnumerable<CountryLocation>
+@{
+    ViewBag.Title = "Global Data Experiment";
+}
+
+<div class="wrapper wrapper-content animated fadeInRight">
+
+    <div class="row">
+
+        <div class="col-md-12">
+            <div class="globe_container" style="height:800px; max-height:800px" data-globe-points="@Json.Encode(Model)"></div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Countries</h3>
+                </div>
+                <table class="table table-condensed table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th>Country</th>
+                            <th>Lat</th>
+                            <th>Long</th>
+                            <th>Message Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var item in Model.OrderBy(x => x.Magnitude))
+                        {
+                            <tr>
+                                <th>@CountryCodes.GetCountryNameFromCode(item.CountryCode)</th>
+                                <td>@item.LAT</td>
+                                <td>@item.LONG</td>
+                                <td>@item.Magnitude</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Styles {
+    @Styles.Render("~/Content/plugins/dataTables")
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/plugins/globe")
+    @Scripts.Render("~/bundles/momentjs")
+    @Scripts.Render("~/plugins/dataTables")
+
+    <script>
+        (function () {
+
+            if (!Detector.webgl) {
+                Detector.addGetWebGLMessage();
+            } else {
+
+                var container = $('.globe_container')[0];
+                var data = Enumerable.From($('.globe_container').data('globe-points'));
+
+                var min = 0;
+                var max = data.Max("$.Magnitude");
+                var norm = function (x) { return (x - min) / (max - min); };
+
+                var globe = new DAT.Globe(container, {
+                    imgDir: "@Url.Content("~/content/plugins/globe/")"
+                });
+
+
+                var globeData = [];
+                data.ForEach(function (e) {
+                    globeData.push(e.LAT);
+                    globeData.push(e.LONG);
+                    globeData.push(norm(e.Magnitude));
+                    //globe.addData([e.LAT, e.LONG, e.Magnitude], { format: "magnitude" });
+                });
+
+
+
+                globe.addData(globeData, { format: "magnitude" });
+                globe.createPoints();
+                globe.animate();
+
+                $('table').DataTable();
+
+            }
+
+        }());
+    </script>
+}

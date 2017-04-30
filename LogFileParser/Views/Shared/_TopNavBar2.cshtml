@@ -17,6 +17,10 @@
                     <a href="@Url.Action("Index", "Messages")">Messages</a>
                 </li>
 
+                <li class="@Html.IsSelected(controller:"Home")">
+                    <a href="@Url.Action("Globe", "Home")">Globe</a>
+                </li>
+
 				<li class="@Html.IsSelected(controller:"Analytics") dropdown">
 					<a aria-expanded="false" role="button" class="dropdown-toggle" data-toggle="dropdown" href="@Url.Action("Index", "Analytics")">Analytics <span class="caret"></span></a>
 					<ul role="menu" class="dropdown-menu">
