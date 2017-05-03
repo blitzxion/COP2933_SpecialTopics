@@ -9,7 +9,7 @@
     <div class="row">
 
         <div class="col-md-12">
-            <div class="globe_container" style="height:800px; max-height:800px" data-globe-points="@Json.Encode(Model)"></div>
+            <div class="globe_container" style="height:800px; max-height:800px; background-image: url('/Content/stars.jpg');" data-globe-points="@Json.Encode(Model)"></div>
         </div>
 
         <div class="col-md-12">
@@ -51,6 +51,7 @@
 }
 
 @section Scripts {
+    @Scripts.Render("~/bundles/plugins/threejs")
     @Scripts.Render("~/bundles/plugins/globe")
     @Scripts.Render("~/bundles/momentjs")
     @Scripts.Render("~/plugins/dataTables")

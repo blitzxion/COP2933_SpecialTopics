@@ -3,11 +3,11 @@
 
 	<div class="row">
 
-		<div class="col-md-12">
+		@*<div class="col-md-12">
 			<canvas id="data-chart" height="120"></canvas>
 		</div>
 
-		<hr />
+		<hr />*@
 
 		<div class="col-md-12">
 
@@ -111,7 +111,7 @@
 		(function () {
 
 			// Chart
-			var chartElem = $('#data-chart');
+			//var chartElem = $('#data-chart');
 
 			var chartConfig = {
 				type: 'polarArea',
@@ -129,12 +129,11 @@
 
 			$(window).on('change', function (e) {
 				//fitToContainer(chartElem[0]);
-				if (chart)
-					chart.resize();
+				//if (chart) chart.resize();
 			}).trigger('change');
 
 
-			var chart = new Chart(chartElem, chartConfig);
+			//var chart = new Chart(chartElem, chartConfig);
 
 			$('[data-input="datetimepicker"]').datetimepicker({
 				sideBySide: true,
@@ -220,27 +219,27 @@
 
 			// Event to tell the chart to start rending the new data
 			var colorHash = new ColorHash({ lightness: [0.35, 0.5, 0.65] });
-			dTable.on('draw.dt', function (e, settings) {
-				var api = new $.fn.dataTable.Api(settings);
-				var data = api.rows().data();
+			//dTable.on('draw.dt', function (e, settings) {
+			//	var api = new $.fn.dataTable.Api(settings);
+			//	var data = api.rows().data();
 
-				var eData = Enumerable.From(data);
-				var chartLabels = eData.Select(function (x) { return x.messageClass; }).Distinct().ToArray();
-				var chartDataValues = eData.GroupBy("$.messageClass").Select("$.Count()").ToArray();
-				var chartColors = chartLabels.map(function (x) { return colorHash.hex(x); });
+			//	var eData = Enumerable.From(data);
+			//	var chartLabels = eData.Select(function (x) { return x.messageClass; }).Distinct().ToArray();
+			//	var chartDataValues = eData.GroupBy("$.messageClass").Select("$.Count()").ToArray();
+			//	var chartColors = chartLabels.map(function (x) { return colorHash.hex(x); });
 
-				chartConfig.data.labels = chartLabels;
-				chartConfig.data.datasets[0] = {
-					data: chartDataValues,
-					backgroundColor: chartColors,
-				};
+			//	chartConfig.data.labels = chartLabels;
+			//	chartConfig.data.datasets[0] = {
+			//		data: chartDataValues,
+			//		backgroundColor: chartColors,
+			//	};
 
-				chart.update();
-			});
+			//	chart.update();
+			//});
 
 			dTable.on('processing.dt', function (e, settings, processing) {
 				$('.overlay').toggle(processing);
-				chartElem.toggle(!processing);
+				//chartElem.toggle(!processing);
 			});
 
 

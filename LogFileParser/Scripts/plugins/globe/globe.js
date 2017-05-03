@@ -86,8 +86,8 @@ DAT.Globe = function (container, opts) {
     var PI_HALF = Math.PI / 2;
 
     var ROTATIONSPEED = 0.003;
-    var k = ROTATIONSPEED;
-    var f = false;
+    var rotationSpeed = ROTATIONSPEED;
+    var isDragging = false;
 
     function init() {
 
@@ -110,11 +110,9 @@ DAT.Globe = function (container, opts) {
         uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir + 'world.jpg');
 
         material = new THREE.ShaderMaterial({
-
             uniforms: uniforms,
             vertexShader: shader.vertexShader,
             fragmentShader: shader.fragmentShader
-
         });
 
         mesh = new THREE.Mesh(geometry, material);
@@ -125,31 +123,64 @@ DAT.Globe = function (container, opts) {
         uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
         material = new THREE.ShaderMaterial({
-
             uniforms: uniforms,
             vertexShader: shader.vertexShader,
             fragmentShader: shader.fragmentShader,
             side: THREE.BackSide,
             blending: THREE.AdditiveBlending,
             transparent: true
-
         });
 
         mesh = new THREE.Mesh(geometry, material);
         mesh.scale.set(1.1, 1.1, 1.1);
         scene.add(mesh);
 
-        var light = new THREE.DirectionalLight(0x3333EE, 3.5, 500);
-        light.position.set(target.x, target.y, distance);
-        scene.add(light);
-
-        geometry = new THREE.BoxGeometry(0.75, 0.75, 1);
+        geometry = new THREE.CubeGeometry(0.75, 0.75, 1);
         geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -0.5));
 
         point = new THREE.Mesh(geometry);
 
-        renderer = new THREE.WebGLRenderer({ antialias: true });
+        // SKybox
+        //var geometry = new THREE.SphereGeometry(3000, 60, 40);
+        //var uniforms = { texture: { type: 't', value: THREE.ImageUtils.loadTexture('/content/stars.jpg') } };
+        //var material = new THREE.ShaderMaterial({
+        //    uniforms: uniforms,
+        //    vertexShader: "varying vec2 vUV; void main() { vUV = uv; vec4 pos = vec4(position, 1.0); gl_Position = projectionMatrix * modelViewMatrix * pos; }",
+        //    fragmentShader: "uniform sampler2D texture; varying vec2 vUV; void main() { vec4 sample = texture2D(texture, vUV); gl_FragColor = vec4(sample.xyz, sample.w); }"
+        //});
+        //var skyBox = new THREE.Mesh(geometry, material);
+        //skyBox.scale.set(-1, 1, 1);
+        //skyBox.eulerOrder = 'XZY';
+        //skyBox.renderDepth = 1000.0;
+        //scene.add(skyBox);  
+
+
+        var urls = [
+            '/content/stars.jpg', '/content/stars.jpg',
+            '/content/stars.jpg', '/content/stars.jpg',
+            '/content/stars.jpg', '/content/stars.jpg'
+        ];
+        var textureCube = new THREE.CubeTextureLoader().load(urls);
+        textureCube.format = THREE.RGBFormat;
+        var shader = THREE.ShaderLib["cube"];
+        shader.uniforms["tCube"].value = textureCube;
+        var material = new THREE.ShaderMaterial({
+            fragmentShader: shader.fragmentShader,
+            vertexShader: shader.vertexShader,
+            uniforms: shader.uniforms,
+            depthWrite: false,
+            side: THREE.BackSide
+        });
+        mesh = new THREE.Mesh(new THREE.BoxGeometry(10000, 10000, 10000, 7, 7, 7), material);
+        scene.add(mesh);
+
+
+        // Render
+
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setClearColor(0x000000, 0);
         renderer.setSize(w, h);
+
 
         renderer.domElement.style.position = 'absolute';
 
@@ -157,7 +188,7 @@ DAT.Globe = function (container, opts) {
 
         container.addEventListener('mousedown', onMouseDown, false);
 
-        container.addEventListener('mousewheel', onMouseWheel, false);
+        container.addEventListener('wheel', onMouseWheel, false);
 
         document.addEventListener('keydown', onDocumentKeyDown, false);
 
@@ -280,8 +311,10 @@ DAT.Globe = function (container, opts) {
     function onMouseDown(event) {
         event.preventDefault();
 
-        k = 0;
-        f = true;
+        //resume_animation();
+
+        rotationSpeed = 0;
+        isDragging = true;
 
         container.addEventListener('mousemove', onMouseMove, false);
         container.addEventListener('mouseup', onMouseUp, false);
@@ -299,6 +332,9 @@ DAT.Globe = function (container, opts) {
     }
 
     function onMouseMove(event) {
+
+        //resume_animation();
+
         mouse.x = - event.clientX;
         mouse.y = event.clientY;
 
@@ -313,8 +349,10 @@ DAT.Globe = function (container, opts) {
 
     function onMouseUp(event) {
 
-        k = ROTATIONSPEED;
-        f = false;
+        //pause_animation();
+
+        rotationSpeed = ROTATIONSPEED;
+        isDragging = false;
 
         container.removeEventListener('mousemove', onMouseMove, false);
         container.removeEventListener('mouseup', onMouseUp, false);
@@ -323,9 +361,9 @@ DAT.Globe = function (container, opts) {
     }
 
     function onMouseOut(event) {
-
-        k = ROTATIONSPEED;
-        f = false;
+        //pause_animation();
+        rotationSpeed = ROTATIONSPEED;
+        isDragging = false;
 
         container.removeEventListener('mousemove', onMouseMove, false);
         container.removeEventListener('mouseup', onMouseUp, false);
@@ -335,7 +373,7 @@ DAT.Globe = function (container, opts) {
     function onMouseWheel(event) {
         event.preventDefault();
         if (overRenderer) {
-            zoom(event.wheelDeltaY * 0.3);
+            zoom(-event.deltaY * 10);
         }
         return false;
     }
@@ -365,23 +403,26 @@ DAT.Globe = function (container, opts) {
         distanceTarget = distanceTarget < 350 ? 350 : distanceTarget;
     }
 
-    function animate() {
-        requestAnimationFrame(animate);
-        render();
-    }
+    var animation_id = null;
+    var animation_timer_id = null;
 
+    function animate() {
+        render();
+        animation_id = requestAnimationFrame(animate);
+    }
+    
     function render() {
         zoom(curZoomSpeed);
 
-        target.x -= k;
+        target.x -= rotationSpeed;
 
         rotation.x += (target.x - rotation.x) * 0.1;
 
-        if (f == true) {
+        if (isDragging == true) {
             rotation.y += (target.y - rotation.y) * 0.2;
         }
 
-        if (f == false) {
+        if (isDragging == false) {
             target.y = Math.PI / 5.0;
             rotation.y += (target.y - rotation.y) * 0.02;
         };

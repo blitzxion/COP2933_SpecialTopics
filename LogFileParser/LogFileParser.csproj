@@ -294,6 +294,7 @@
     <Content Include="Content\plugins\nouislider\nouislider.min.css" />
     <Content Include="Content\sky.png" />
     <Content Include="Content\spinner.css" />
+    <Content Include="Content\stars.jpg" />
     <Content Include="Content\style.css" />
     <Content Include="favicon.ico" />
     <Content Include="fonts\font-awesome\css\font-awesome.css" />
@@ -427,6 +428,10 @@
     <Content Include="Scripts\plugins\pace\pace.min.js" />
     <Content Include="Scripts\plugins\slimscroll\jquery.slimscroll.min.js" />
     <Content Include="Scripts\plugins\sparkline\jquery.sparkline.min.js" />
+    <Content Include="Scripts\plugins\threejs\three.js" />
+    <Content Include="Scripts\plugins\threejs\three.min.js" />
+    <Content Include="Scripts\plugins\threejs\three.module.js" />
+    <Content Include="Scripts\plugins\threejs\threeextras.js" />
     <Content Include="Scripts\regression.js" />
     <Content Include="Scripts\respond.js" />
     <Content Include="Scripts\respond.matchmedia.addListener.js" />
@@ -434,7 +439,6 @@
     <Content Include="Scripts\respond.min.js" />
     <Content Include="Scripts\sql-parser.js" />
     <Content Include="Scripts\sql-parser.min.js" />
-    <Content Include="Scripts\three.js" />
     <Content Include="Scripts\utils.js" />
     <Content Include="Scripts\_references.js" />
     <Content Include="Web.config" />
